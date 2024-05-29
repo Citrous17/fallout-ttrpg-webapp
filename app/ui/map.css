@@ -1,0 +1,27 @@
+.map-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  
+  .map-image-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .map-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  
+  .map-point {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+  }
+  
