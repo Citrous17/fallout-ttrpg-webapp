@@ -1,5 +1,4 @@
 // @ts-nocheck
-import { unstable_noStore as noStore } from 'next/cache';
 
 import { sql } from '@vercel/postgres';
 import db from './db';
@@ -60,7 +59,6 @@ export async function fetchRevenue(): Promise<Revenue[]> {
 
 export async function fetchPlayerData() {
   try {
-    noStore();
     const data = await db.query(`SELECT * FROM PLAYERS`);
 
     const playerData = data.rows.map((row: any) => ({
@@ -78,7 +76,6 @@ export async function fetchPlayerData() {
 
 export async function fetchLatestInvoices() {
   try {
-      noStore();
       const data = await db.query(`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
@@ -109,7 +106,6 @@ export async function fetchCardData() {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
     // how to initialize multiple queries in parallel with JS.
-    noStore();
     const invoiceCountPromise = db.query(`SELECT COUNT(*) FROM invoices`);
     const customerCountPromise = db.query(`SELECT COUNT(*) FROM customers`);
     const invoiceStatusPromise = db.query(`SELECT
@@ -145,7 +141,6 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number,
 ) {
-  noStore();
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
@@ -182,7 +177,6 @@ export async function fetchFilteredInvoices(
 
 export async function fetchInvoicesPages(query: string) {
   try {
-    noStore();
     const count = await db.query(`SELECT COUNT(*)
     FROM invoices
     JOIN customers ON invoices.customer_id = customers.id
@@ -204,7 +198,6 @@ export async function fetchInvoicesPages(query: string) {
 
 export async function fetchInvoiceById(id: string) {
   try {
-    noStore();
     const data = await db.query(`
       SELECT
         invoices.id,
@@ -234,7 +227,6 @@ export async function fetchInvoiceById(id: string) {
 
 export async function fetchCustomers() {
   try {
-    noStore();
     const data = await db.query(`
       SELECT
         id,
@@ -259,7 +251,6 @@ create-form.tsx(12, 47): The expected type comes from property 'customers' which
 
 export async function fetchFilteredCustomers(query: string) {
   try {
-    noStore();
     const data = await sql<CustomersTableType>`
 		SELECT
 		  customers.id,
@@ -292,7 +283,6 @@ export async function fetchFilteredCustomers(query: string) {
 }
 
 export async function getUser(email: string) {
-  noStore();
   try {
     const user = await sql`SELECT * FROM users WHERE email=${email}`;
     return user.rows[0] as User;
