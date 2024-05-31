@@ -7,10 +7,11 @@ import { z } from 'zod';
 import db from '@/app/lib/db';
 import type { User } from '@/app/lib/definitions';
 import bcrypt from 'bcrypt';
+import { sql } from '@vercel/postgres';
  
 async function getUser(email: string): Promise<User | undefined> {
   try {
-    const user = await db.query(`SELECT * FROM users WHERE email='${email}'`);
+    const user = await sql`SELECT * FROM users WHERE email=${email}`;
 
     return user.rows[0];
   } catch (error) {

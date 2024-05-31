@@ -5,6 +5,9 @@ import {
   DocumentDuplicateIcon,
   MapIcon,
   BookOpenIcon,
+  UsersIcon,
+  QueueListIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -13,10 +16,13 @@ import clsx from 'clsx';
 // Depending on the size of the application, this would be stored in a database.
 const links = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
+  { name: 'Combat: Coming Soon', href: '/dashboard/combat', icon: ExclamationTriangleIcon},
   { name: 'Players', href: '/dashboard/players', icon: UserGroupIcon },
+  { name: 'NPCs: Coming Soon', href: '/dashboard/npcs', icon: UsersIcon },
   { name: 'Map: Coming Soon', href: '/dashboard/maps', icon: MapIcon },
   { name: 'Quests: Coming Soon', href: '/dashboard/quests', icon: BookOpenIcon},
   { name: 'Past Sessions: Coming Soon', href: '/dashboard/sessions', icon: DocumentDuplicateIcon },
+  { name: 'Stat Check: Coming Soon', href: '/dashboard/statcheck', icon: QueueListIcon },
 ]
 
 export default function NavLinks() {

@@ -1,6 +1,10 @@
 // This file contains type definitions for your data.
 // It describes the shape of the data, and what data type each property should accept.
 // For simplicity of teaching, we're manually defining these types.
+
+import exp from "constants";
+import { UUID } from "crypto";
+
 // However, these types are generated automatically if you're using an ORM such as Prisma.
 export type User = {
   id: string;
@@ -11,18 +15,115 @@ export type User = {
   image_url: string;
 };
 
+export type Profile = {
+  rads: number;
+  hp: number;
+  maxHP: number;
+  image_url: string;
+  id: any;
+  name: any;
+  level: any;
+  xp: any;
+  caps: any;
+  origin: any;
+  special: any;
+  defense: any;
+  weapons: any;
+}
+
+export type SkillsType = {
+  Athletics: 'STR';
+  Barter: 'CHA';
+  Big_Guns: 'STR';
+  Energy_Weapons: 'PER';
+  Explosives: 'PER';
+  Lockpick: 'PER';
+  Medicine: 'INT';
+  Melee_Weapons: 'STR';
+  Pilot: 'PER';
+  Repair: 'INT';
+  Science: 'INT';
+  Small_Guns: 'AGI';
+  Sneak: 'AGI';
+  Speech: 'CHA';
+  Survival: 'END';
+  Unarmed: 'STR';
+}
+
+export type SPECIAL = {
+  Strength: "STR";
+  Perception: "PER";
+  Endurance: "END";
+  Charisma: "CHA";
+  Intelligence: "INT";
+  Agility: "AGI";
+  Luck: "LCK";
+}
+
+export type Skills = {
+    Athletics: [number, boolean];
+    Barter: [number, boolean];
+    Big_Guns: [number, boolean];
+    Energy_Weapons: [number, boolean];
+    Explosives: [number, boolean];
+    Lockpick: [number, boolean];
+    Medicine: [number, boolean];
+    Melee_Weapons: [number, boolean];
+    Pilot: [number, boolean];
+    Repair: [number, boolean];
+    Science: [number, boolean];
+    Small_Guns: [number, boolean];
+    Sneak: [number, boolean];
+    Speech: [number, boolean];
+    Survival: [number, boolean];
+    Unarmed: [number, boolean];
+}
+
+export type DamageEffects = {
+  None: ['None', 'No additional effects'];
+  Burst: ['Burst', 'The attacks hits one additional target within [CLOSE] range of the primary target for each Effect rolled. Each additional target spends 1 attitional unit of ammuniion from the weaspon'];
+  Breaking: ['Breaking', 'For each Effect Rolled, reduce the number of the targets cover by 1 permanetly. IF the target is not in cover, instead reduce the DR of the location struck by 1.'];
+  Persistent: ['Persistent', 'If one or more Effects are rolled, the target suffers the weapons damage again at the end of their next and subsequent truns, for a number of rounds equal to the number of Effects rolled.'];
+  Piercing: ['Piercing X', 'Ignores X points of the targets Damage Resistance.'];
+  Radioactive: ['Radioactive', 'The target suffers 1 RAD for each Effect rolled.'];
+  Spread: ['Spread', 'The attack hits one additional target within [CLOSE] range of the primary target for each Effect rolled. Each additional hit inflicts the rolled damage (rounded down) and hits a random location even if a specific location was targeted for the initial attack'];
+  Stun: ['Stun', 'The target is Stunned for 1 round, regardless of the number of Effects rolled. A stunned creature can still spend AP to take additional actions as normal'];
+  Vicious: ['Vicious', 'The target suffers 1 additional damage for each Effect rolled.'];
+}
+
+export type DamageTypes = {
+  Physical: ['Physical', 'Unarmed attacks, blunt force, slashing and stabbing, ballistics'];
+  Energy: ['Energy', 'Laser, plasma, and radiation'];
+  Radiation: ['Radiation', 'Exposure to RADs, or nuclear weaponry']
+  Poison: ['Poison', 'Toxins, Chemicals, and creatures stings and barbs'];
+}
+
+export type Battle = {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  turnOrder: string[];
+  turn: number;
+  enemies: UUID[];
+  players: UUID[];
+}
+
 export type Weapon = {
   id: string;
-  name: string;
   image_url: string;
-  damage: number;
-  type: string;
+  type: 'Small Guns' | 'Big Guns' | 'Energy Weapons' | 'Explosives';
+  attack_type: 'Melee' | 'Ranged' | 'Thrown' | 'Unarmed'
+  name: string;
   ammo_type: string;
-  ammo_capacity: number;
-  range: number;
-  accuracy: number;
   weight: number;
   value: number;
+  combatdice: number;
+  DamageEffects: DamageEffects[];
+  DamageType: DamageTypes;
+  range: 'C' | 'M' | 'L';
+  wield: 'One-Handed' | 'Two-Handed';
+  fireRate: 0 | 1 | 2 | 3;
 };
 
 export type Player = {
@@ -37,7 +138,8 @@ export type Player = {
   origin: string;
   special: number[];
   defense: number;
-  weapons: Weapon[];
+  weapons: string[];
+  skills: Skills;
 }
 
 export type Loot = {
@@ -48,96 +150,37 @@ export type Loot = {
   weight: number;
 }
 
+export type Attack = {
+  name: string;
+  priority: number;
+}
+
 export type Enemy = {
   id: string;
   image_url: string;
   name: string;
+  bodyStat: number;
+  mindStat: number;
+  meleeStat: number;
+  gunsStat: number;
+  otherStat: number;
+  initiative: number;
+  luckPoints: number;
+  physDR: number;
+  energyDR: number;
+  radDR: number;
+  poisonDR: number;
   maxHP: number;
+  carryWeight: number;
+  meleeBonus: number;
   hp: number;
   xp: number;
   level: number;
-  caps: number;
-  origin: string;
   special: number[];
   defense: number;
-  weapons: Weapon[];
+  attacks: Attack[];
+  weapons: string[];
   lootDrops: Loot[];
+  skills: Skills;
+  expand: boolean;
 }
-
-export type Customer = {
-  id: string;
-  name: string;
-  email: string;
-  image_url: string;
-};
-
-export type Invoice = {
-  id: string;
-  customer_id: string;
-  amount: number;
-  date: string;
-  // In TypeScript, this is called a string union type.
-  // It means that the "status" property can only be one of the two strings: 'pending' or 'paid'.
-  status: 'pending' | 'paid';
-};
-
-export type Revenue = {
-  month: string;
-  revenue: number;
-};
-
-export type LatestInvoice = {
-  id: string;
-  name: string;
-  image_url: string;
-  email: string;
-  amount: string;
-};
-
-// The database returns a number for amount, but we later format it to a string with the formatCurrency function
-export type LatestInvoiceRaw = Omit<LatestInvoice, 'amount'> & {
-  amount: number;
-};
-
-export type InvoicesTable = {
-  id: string;
-  customer_id: string;
-  name: string;
-  email: string;
-  image_url: string;
-  date: string;
-  amount: number;
-  status: 'pending' | 'paid';
-};
-
-export type CustomersTableType = {
-  id: string;
-  name: string;
-  email: string;
-  image_url: string;
-  total_invoices: number;
-  total_pending: number;
-  total_paid: number;
-};
-
-export type FormattedCustomersTable = {
-  id: string;
-  name: string;
-  email: string;
-  image_url: string;
-  total_invoices: number;
-  total_pending: string;
-  total_paid: string;
-};
-
-export type CustomerField = {
-  id: string;
-  name: string;
-};
-
-export type InvoiceForm = {
-  id: string;
-  customer_id: string;
-  amount: number;
-  status: 'pending' | 'paid';
-};

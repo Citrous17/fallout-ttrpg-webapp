@@ -1,6 +1,6 @@
 // @ts-nocheck
-
 import { sql } from '@vercel/postgres';
+import { unstable_noStore as noStore } from 'next/cache';
 import db from './db';
 import {
   CustomerField,
@@ -8,277 +8,165 @@ import {
   InvoiceForm,
   InvoicesTable,
   LatestInvoice,
+  Profile,
   User,
   Revenue,
+  Enemy,
+  Battle,
 } from './definitions';
 import { formatCurrency } from './utils';
 
-export async function fetchRevenue(): Promise<Revenue[]> {
+export async function populateEnemyCards(battleProgress: any): Promise<Enemy[]> {
+  console.log('Battle Progress:', battleProgress)
+  const enemyCards = [];
+  for (const enemyID of battleProgress.enemies) {
+    const data: Enemy = await fetchEnemyById(enemyID);
+    enemyCards.push(data);
+  }
+  console.log('Enemy Cards:', enemyCards)
+  return enemyCards;
+}
+
+export async function populatePlayerCards(battleProgress: any): Promise<Player[]> {
+  console.log('Battle Progress:', battleProgress)
+  const playerCards = [];
+  for (const playerID of battleProgress.players) {
+    const data: Player = await fetchPlayerById(playerID);
+    playerCards.push(data);
+  }
+  console.log('Player Cards:', playerCards)
+  return playerCards;
+}
+
+export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}> {
+  console.log('Fetching battle progress...');
   try {
-
-    console.log('Fetching revenue data...');
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    const data = await db.query(`SELECT * FROM revenue`);
-
-    console.log('Data fetch completed after 3 seconds.');
-
-    const revenueData: Revenue[] = data.rows.map((row: any) => ({
-      month: row.month,
-      revenue: row.revenue,
+    console.log('Fetching battle progress...');
+    const data = await sql`SELECT * FROM BATTLES;`;
+    
+    const battleProgress = data.rows.map((row: Battle) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      image_url: row.image_url,
+      turnOrder: row.turnorder,
+      turn: row.turn,
+      enemies: row.enemies,
+      players: row.players,
     }));
 
-    // revenueData needs to be sorted by month chronological order, with january first, december last
-    revenueData.sort((a, b) => {
-      const monthToNumber: { [key: string]: number } = {
-        Jan: 1,
-        Feb: 2,
-        Mar: 3,
-        Apr: 4,
-        May: 5,
-        Jun: 6,
-        Jul: 7,
-        Aug: 8,
-        Sep: 9,
-        Oct: 10,
-        Nov: 11,
-        Dec: 12,
-      };
+    console.log('Battle Progress:', battleProgress);
 
-      return monthToNumber[a.month] - monthToNumber[b.month];
-    });
+    return { battleProgress }; // Ensure it returns an object with battleProgress key
 
-    console.log('Sorted Revenue Data:', revenueData);
-
-    return revenueData;
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch revenue data.');
+    throw new Error('Failed to fetch battle progress.');
   }
 }
 
-export async function fetchPlayerData() {
+export async function fetchPlayerById(id: string) {
   try {
-    const data = await db.query(`SELECT * FROM PLAYERS`);
+    const data = await sql`SELECT * FROM PLAYERS WHERE id=${id};`;
 
-    const playerData = data.rows.map((row: any) => ({
+    const player = data.rows.map((row: any) => ({
       id: row.id,
+      image_url: row.image_url,
       name: row.name,
       level: row.level,
+      maxHP: row.maxhp,
+      hp: row.hp,
+      rads: row.rads,
+      xp: row.xp,
+      caps: row.caps,
+      origin: row.origin,
+      special: row.special,
+      defense: row.defense,
+      weapons: row.weapons,
+      skills: row.skills
     }));
 
-    return playerData;
+    return player[0]; // Ensure it returns an object with player key
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch player data.');
   }
 }
 
-export async function fetchLatestInvoices() {
+export async function fetchEnemyById(id: string) {
   try {
-      const data = await db.query(`
-      SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      ORDER BY invoices.date DESC
-      LIMIT 5`);
+    const data = await sql`SELECT * FROM ENEMIES WHERE id=${id};`;
 
+    console.log('Data fetch completed.');
+    console.log('Enemy:', data.rows);
 
-    const latestInvoices: LatestInvoice[] = data.rows.map((invoice: any) => ({
-      id: invoice.id,
-      name: invoice.name,
-      image_url: invoice.image_url,
-      email: invoice.email,
-      amount: invoice.amount.toString(), // Convert the 'amount' property to a string
+    const enemy = data.rows.map((row: any) => ({
+      id: row.id,
+      image_url: row.image_url,
+      name: row.name,
+      bodyStat: row.bodystat,
+      mindStat: row.mindstat,
+      meleeStat: row.meleestat,
+      gunsStat: row.gunsstat,
+      otherStat: row.otherstat,
+      initiative: row.initiative,
+      luckPoints: row.luckpoints,
+      physDR: row.physdr,
+      energyDR: row.energydr,
+      radDR: row.raddr,
+      poisonDR: row.poisondr,
+      maxHP: row.maxhp,
+      carryWeight: row.carryweight,
+      meleeBonus: row.meleebonus,
+      hp: row.hp,
+      xp: row.xp,
+      level: row.level,
+      special: row.special,
+      skills: row.skills,
+      defense: row.defense,
+      attacks: row.attacks,
+      weapons: row.weapons,
+      lootDrops: row.lootdrops,
+      expand: false
     }));
 
-    console.log('Sorted Latest Invoices:', latestInvoices);
-
-    return latestInvoices;
+    return enemy[0]; // Ensure it returns an object with enemy key
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch the latest invoices.');
+    throw new Error('Failed to fetch enemy data.');
   }
 }
 
-export async function fetchCardData() {
+export async function fetchPlayerData(): Promise<{ profiles: Profile[] }> {
   try {
-    // You can probably combine these into a single SQL query
-    // However, we are intentionally splitting them to demonstrate
-    // how to initialize multiple queries in parallel with JS.
-    const invoiceCountPromise = db.query(`SELECT COUNT(*) FROM invoices`);
-    const customerCountPromise = db.query(`SELECT COUNT(*) FROM customers`);
-    const invoiceStatusPromise = db.query(`SELECT
-         SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
-         SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
-         FROM invoices`);
+    console.log('Fetching player data...');
+    const data = await sql`SELECT * FROM PLAYERS;`;
 
-    const data = await Promise.all([
-      invoiceCountPromise,
-      customerCountPromise,
-      invoiceStatusPromise,
-    ]);
-
-    const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
-    const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
-    const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');
-    const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0');
-
-    return {
-      numberOfCustomers,
-      numberOfInvoices,
-      totalPaidInvoices,
-      totalPendingInvoices,
-    };
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch card data.');
-  }
-}
-
-const ITEMS_PER_PAGE = 6;
-export async function fetchFilteredInvoices(
-  query: string,
-  currentPage: number,
-) {
-  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
-  try {
-    console.log('Begin fetching invoices with query:', query);
-    const invoices = await db.query(`
-      SELECT
-        invoices.id,
-        invoices.amount,
-        invoices.date,
-        invoices.status,
-        customers.name,
-        customers.email,
-        customers.image_url
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      WHERE
-        customers.name ILIKE '${`%${query}%`}' OR
-        customers.email ILIKE '${`%${query}%`}' OR
-        invoices.amount::text ILIKE '${`%${query}%`}' OR
-        invoices.date::text ILIKE '${`%${query}%`}' OR
-        invoices.status ILIKE '${`%${query}%`}'
-      ORDER BY invoices.date DESC
-      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-    `);
-
-    console.log('Fetched Invoices:', invoices.rows);
-
-    return invoices.rows;
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoices.');
-  }
-}
-
-export async function fetchInvoicesPages(query: string) {
-  try {
-    const count = await db.query(`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE '${`%${query}%`}' OR
-      customers.email ILIKE '${`%${query}%`}' OR
-      invoices.amount::text ILIKE '${`%${query}%`}' OR
-      invoices.date::text ILIKE '${`%${query}%`}' OR
-      invoices.status ILIKE '${`%${query}%`}'
-  `);
-
-    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
-    return totalPages;
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of invoices.');
-  }
-}
-
-export async function fetchInvoiceById(id: string) {
-  try {
-    const data = await db.query(`
-      SELECT
-        invoices.id,
-        invoices.customer_id,
-        invoices.amount,
-        invoices.status
-      FROM invoices
-      WHERE invoices.id = '${id}';
-    `);
-
-    console.log('Fetched Invoices:', data.rows);
-
-    const invoice = data.rows.map((invoice) => ({
-      ...invoice,
-      // Convert amount from cents to dollars
-      amount: invoice.amount / 100,
+    console.log('Data fetch completed.');
+    console.log('Data:', data);
+    const playerData = data.rows.map((row: any) => ({
+      id: row.id,
+      image_url: row.image_url,
+      name: row.name,
+      level: row.level,
+      maxHP: row.maxhp,
+      hp: row.hp,
+      rads: row.rads,
+      xp: row.xp,
+      caps: row.caps,
+      origin: row.origin,
+      special: row.special,
+      defense: row.defense,
+      weapons: row.weapons,
+      skills: row.skills
     }));
+    console.log('Player Data:', playerData);
 
-    console.log('Fetched Invoice:', invoice[0]);
-
-    return invoice[0];
+    return { profiles: playerData }; // Ensure it returns an object with profiles key
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoice.');
-  }
-}
-
-export async function fetchCustomers() {
-  try {
-    const data = await db.query(`
-      SELECT
-        id,
-        name
-      FROM customers
-      ORDER BY name ASC
-    `);
-
-    /*
-    Type 'any[][]' is not assignable to type 'CustomerField[]'.
-  Type 'any[]' is missing the following properties from type 'CustomerField': id, namets(2322)
-create-form.tsx(12, 47): The expected type comes from property 'customers' which is declared here on type 'IntrinsicAttributes & { customers: CustomerField[]; }'
-    */
-    const customers = data.rows as CustomerField[];
-
-    return customers;
-  } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
-  }
-}
-
-export async function fetchFilteredCustomers(query: string) {
-  try {
-    const data = await sql<CustomersTableType>`
-		SELECT
-		  customers.id,
-		  customers.name,
-		  customers.email,
-		  customers.image_url,
-		  COUNT(invoices.id) AS total_invoices,
-		  SUM(CASE WHEN invoices.status = 'pending' THEN invoices.amount ELSE 0 END) AS total_pending,
-		  SUM(CASE WHEN invoices.status = 'paid' THEN invoices.amount ELSE 0 END) AS total_paid
-		FROM customers
-		LEFT JOIN invoices ON customers.id = invoices.customer_id
-		WHERE
-		  customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`}
-		GROUP BY customers.id, customers.name, customers.email, customers.image_url
-		ORDER BY customers.name ASC
-	  `;
-
-    const customers = data.rows.map((customer) => ({
-      ...customer,
-      total_pending: formatCurrency(customer.total_pending),
-      total_paid: formatCurrency(customer.total_paid),
-    }));
-
-    return customers;
-  } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Failed to fetch customer table.');
+    throw new Error('Failed to fetch player data.');
   }
 }
 
