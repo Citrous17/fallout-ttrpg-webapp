@@ -7,6 +7,7 @@ import { PlayerCard, EnemyCard } from '@/app/ui/combat/cards';
 import { wrapInBlue, wrapInGreen, wrapInRed, wrapInYellow } from '@/app/lib/utils';
 import { useEffect } from 'react';
 interface CombatProps {
+    UserWeapons: Weapon;
     BattleInfo: Battle;
     enemyCards: Enemy[];
     playerCards: Player[]
@@ -18,8 +19,9 @@ import { fetchBattleProgress } from '@/app/lib/data';
 import { populateEnemyCards, populatePlayerCards } from '@/app/lib/data';
 
 export const dynamic = "force-dynamic"
+export const fetchCache = 'force-no-store';
 
-const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) => {
+const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: CombatProps) => {
   const [showActions, setShowActions] = useState(false);
   const [enemies, setEnemies] = useState<Enemy[]>(enemyCards);
   const [players, setPlayers] = useState<Player[]>(playerCards);
@@ -40,6 +42,7 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
   async function updateCards() {
       const response = await fetch('/api/battle', {
         method: 'GET',
+        cache:"no-cache",
       });
       const data = await response.json();
 
@@ -59,7 +62,8 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
         'Content-Type': 'application/json',
         'Post-Type': 'newTurn',
       },
-      body: JSON.stringify({ id: BattleInfo.id }),
+      body: JSON.stringify({ id: BattleInfo.id, turnOrder: newTurnOrder}),
+      cache:"no-cache"
     });
 
     setTurn(turn + 1);
@@ -68,6 +72,20 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
   function playAudio(audio: string) {
     const audioElement = new Audio(audio);
     audioElement.play();
+  }
+
+  async function getStats(id: string, type: string) {
+    const data = await fetch('/api/battle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Post-Type': 'getStats',
+      },
+      body: JSON.stringify({ id, type }),
+      cache:"no-cache"
+    });
+    const stats = await data.json();
+    return stats;
   }
 
   function rolld20() {
@@ -112,8 +130,6 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
     let successes = 0;
     for(let i = 0; i < rolls; i++) {
       const roll = rolld20();
-      console.log("Roll:", roll)
-      console.log("Target:", target)
       if(roll == 20) {
         console.log('Critical Success!');
         successes++;
@@ -134,15 +150,13 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
       }
     }
     if(successes > difficulty) {
-      console.log('Test Passed!');
       return true;
     } else {
-      console.log('Test Failed!');
       return false;
     }
   }
 
-  async function handleAttack(weaponID: String, attacker: Enemy | Player, defender: Enemy | Player) {
+  async function handleAttack(weaponID: string, attacker: Enemy | Player, defender: Enemy | Player) {
     // 1. Attempt a Test
     // 2. Inflict Damage
     // 3. Reduce Ammuniton
@@ -150,19 +164,14 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
     // Play Audio
     playAudio('/audio/weapons/10mm Pistol.ogg');
 
-    await updateCards();
+    const defenderType = isPlayer(defender.id) ? 'player' : 'enemy';
 
-    const data = await fetch('/api/battle', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Post-Type': 'getWeapon',
-      },
-      body: JSON.stringify({ id: weaponID }),
+    await getStats(defender.id, defenderType).then((stats) => {
+      defender = stats.stats;
     });
 
-    const weaponData = await data.json();
-    const weapon: Weapon = weaponData.weapon;
+    const weapon = await getWeaponFromId(weaponID)
+
     let hit = false
     console.log(weapon);
     let damage = 0;
@@ -240,6 +249,7 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
         'Post-Type': 'attack',
       },
       body: JSON.stringify({ weapon, attacker, defender }),
+      cache:"no-cache"
     });
     
   }
@@ -248,7 +258,11 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
     setShowActions(!showActions);
   };
 
-  const displayActions = actions.slice(-10);
+  function getTurnCardImage(id: string) {
+    const playerCard = playerCards.find(card => card.id === id);
+    const enemyCard = enemyCards.find(card => card.id === id);
+    return (playerCard?.image_url ?? enemyCard?.image_url) ?? '/enemies/MissingImage.png';
+  }
 
   function getTurnCardColor(id: string) {
     if(playerCards.find(card => card.id === id)){
@@ -278,8 +292,49 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
     }
   }
 
-  return (
+  function getCurrentPlayer() {
+    const currentPlayer = playerCards.find(card => card.id === turnOrder[0]);
+    return currentPlayer;
+  }
 
+  async function getCurrentWeapon() {
+    const currentPlayer = playerCards.find(card => card.id === turnOrder[0]);
+    if(currentPlayer) {
+      const weaponID= currentPlayer.weapons[0];
+      let weapon = await getWeaponFromId(weaponID);
+      if(!weapon) {
+        throw new Error('Weapon not found');
+      }
+      return weapon;
+    }  
+    throw new Error('Player not found')
+  }
+
+  async function getWeaponFromId(id: string) {
+    const data = await fetch('/api/battle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Post-Type': 'getWeapon',
+      },
+      body: JSON.stringify({ id: id }),
+      cache:"no-cache"
+    });
+
+    const weaponData = await data.json();
+    const weapon: Weapon = weaponData.weapon;
+
+    if (!weapon) {
+      throw new Error('Weapon not found');
+    }
+
+    return weapon;
+  }
+
+  const currentWeapon = getCurrentWeapon();
+  const displayActions = actions.slice(-10);
+
+  return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center relative">
       <div className="absolute top-0 left-0 m-4">
         {/* Turn Order Cards */}
@@ -290,7 +345,7 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
               {
                 turnOrder.map((turn, index) => (                  
                   <div key={index} className={`p-2 m-2 rounded-lg shadow-md ${getTurnCardColor(turn)} ${index == 0 ? 'border-amber-300 border-4' : ''}`}>
-                    <Image src={playerCards.find(card => card.id === turn)?.image_url ?? '/players/MissingImage.png'} alt="Card Image" className="w-16 h-16 mx-auto rounded-full" />
+                    <Image src={getTurnCardImage(turn)} alt="Card Image" className="w-16 h-16 mx-auto rounded-full" width={100} height={100}/>
                   </div>
                 ))
               }
@@ -307,14 +362,8 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
           <div key={index} className={`${getCardColor(enemy.id)} p-4 m-2 rounded-lg text-center shadow-md min-w-[200px]`}>
             <EnemyCard key={enemy.id} enemy={enemy} expand={enemy.expand} />
             <button
-              onClick={(e: any) => handleCardToggle(enemy.id)}
-              className="bg-blue-300 text-black py-2 px-4 rounded-md hover:bg-darkred-600 focus:outline-none focus:ring-2 focus:ring-darkred-500"
-            >
-              {enemy.expand ? 'Collapse' : 'Info'}
-            </button>
-            <button
-              onClick={(e: any) => handleAttack(playerCards[0].weapons[0], enemy, playerCards[0])}
-              className="bg-red-500 text-black py-2 px-4 rounded-md hover:bg-darkred-600 focus:outline-none focus:ring-2 focus:ring-darkred-500"
+              onClick={async (e: any) => handleAttack(getCurrentPlayer()?.weapons[0] || '', getCurrentPlayer()!, enemy)}
+              className="bg-red-500 text-black py-2 px-8 rounded-md hover:bg-darkred-600 focus:outline-none focus:ring-2 focus:ring-darkred-500"
             >
               Attack
             </button>
@@ -357,13 +406,21 @@ const Combat = ({ BattleInfo, enemyCards, playerCards, actions }: CombatProps) =
       </div>
 
       {/* Next Turn Button */}
-      <div className="absolute bottom-16 right-0 m-4">
+      <div className="absolute bottom-32 right-0 m-4">
         <button
           onClick={increaseTurn}
           className="bg-yellow-400 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Next Turn
         </button>
+      </div>
+
+      {/* Display the current weapon the player is using */}
+      <div className="absolute bottom-0 right-0 m-4">
+        <div className="bg-white text-center shadow-md rounded-lg my-4 py-2 px-4">
+          <h1 className="text-2xl font-bold text-gray-900">Current Weapon</h1>
+          <h2 className="text-xl font-bold text-gray-900">{UserWeapons.name}</h2>
+        </div>
       </div>
 
       {/* Spacer */}

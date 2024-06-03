@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Weapon, Enemy, Player } from '@/app/lib/definitions';
 import { sql } from '@vercel/postgres';
-type ResponseData = {
-  message: string
-}
 
 export async function GET(request: Request) {
    const res = await sql`SELECT * FROM battles`;
@@ -127,15 +124,16 @@ export async function POST(request: Request) {
   if(request.headers.get('Post-Type') == 'newTurn') {
   const requestBody = JSON.parse(await request.text())
   const res = await sql`UPDATE battles SET turn = turn + 1 WHERE id = ${requestBody.id}`
-
+  const res2 = await sql`UPDATE battles SET turnOrder = ${requestBody.turnOrder} WHERE id = ${requestBody.id}`;
   return Response.json({ message: 'Turn incremented' })
   } 
   else if(request.headers.get('Post-Type') == 'attack') {
-    const requestBody = JSON.parse(await request.text())
+    const requestBody = JSON.parse(await request.text());
 
-    const res = await sql`UPDATE battles SET turn = turn + 1 WHERE id = ${requestBody.id}`
+    const res = await sql`UPDATE battles SET turn = turn + 1 WHERE id = ${requestBody.id}`;
 
-    return Response.json({ message: 'Turn incremented' })
+
+    return Response.json({ message: 'Turn incremented' });
   }
   else if(request.headers.get('Post-Type') == 'getWeapon') {
     const requestBody = JSON.parse(await request.text())
@@ -157,5 +155,25 @@ export async function POST(request: Request) {
     }
 
     return Response.json({ message: 'HP updated' })
+  } else if(request.headers.get('Post-Type') == 'enemyAction') {
+    const requestBody = JSON.parse(await request.text())
+
+    const res = await sql`SELECT battles SET turn = turn + 1 WHERE id = ${requestBody.id}`
+
+    
+  } else if(request.headers.get('Post-Type') == 'getStats') {
+    const requestBody = JSON.parse(await request.text())
+
+    const id = requestBody.id
+    const type = requestBody.type
+    if(type == 'player') {
+      const res = await sql`SELECT * FROM players WHERE id = ${id}`
+      return Response.json({ message: 'Stats fetched', stats: res.rows[0] })
+    } else if(type == 'enemy') {
+      const res = await sql`SELECT * FROM enemies WHERE id = ${id}`
+      return Response.json({ message: 'Stats fetched', stats: res.rows[0] })
+    }
+    return Response.json({ message: 'No stats found' })
+
   }
 }

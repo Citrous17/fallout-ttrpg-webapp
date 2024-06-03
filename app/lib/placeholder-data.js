@@ -82,7 +82,7 @@ const battles = [
     title: 'Battle of Abernathy Farm',
     description: 'The raiders are attacking the Abernathy Farm. Help defend the farm and save the Abernathy family.',
     image_url: '/battles/abernathy-farm.png',
-    turnOrder: ['410544b2-4001-4271-9855-fec4b6a6442b', '410544b2-4001-4271-9855-fec4b6a6442a', '410544b2-4001-4271-9855-fec4b6a6442c'],
+    turnOrder: ['410544b2-4001-4271-9855-fec4b6a6442b', '410544b2-4001-4271-9855-fec4b6a6442a', '410544b2-4001-4271-9855-fec4b6a6442c', '410544b2-4001-4271-9855-fec4b6a6442'],
     turn: 0,
     enemies: ['410544b2-4001-4271-9855-fec4b6a6442b', '410544b2-4001-4271-9855-fec4b6a6442c'],
     players: ['410544b2-4001-4271-9855-fec4b6a6442a', '410544b2-4001-4271-9855-fec4b6a6442d'],

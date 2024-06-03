@@ -1,9 +1,14 @@
 import Combat from '@/app/ui/combat/Combat';
 import { Suspense } from 'react';
-import { populateEnemyCards, populatePlayerCards, fetchBattleProgress, fetchEnemyById, fetchPlayerById } from '@/app/lib/data';
+import { fetchUserWeapons, populateEnemyCards, populatePlayerCards, fetchBattleProgress, fetchEnemyById, fetchPlayerById } from '@/app/lib/data';
 import { Player, Enemy, Battle } from '@/app/lib/definitions';
+import { Weapon } from '@/app/lib/definitions';
+export const dynamic = "force-dynamic"
+export const fetchCache = 'force-no-store';
+import { cookies } from 'next/headers'
 
 async function populateActions(battleProgress: any) {
+  
   const actions: string[] = [];
   const wrapInGreen = (text: string) => `<span class="text-green-500">${text}</span>`;
   const wrapInRed = (text: string) => `<span class="text-red-500">${text}</span>`;
@@ -18,21 +23,25 @@ async function populateActions(battleProgress: any) {
 }
 
 export default async function Page() {
+    const cookieStore = cookies();
+    const userEmail = cookieStore.get('email') || ''; // Provide a default value of an empty string if userEmail is undefined
+    console.log('EMAIL:', userEmail ? userEmail.value : 'No email found');
     const { battleProgress } = await fetchBattleProgress();
-    console.log('Battle Progress:', battleProgress)
+    const userWeapons = await fetchUserWeapons(userEmail ? userEmail.value : 'No email found'); // Convert userEmail to a string
     const enemyCards = await populateEnemyCards(battleProgress[0]);
     const playerCards = await populatePlayerCards(battleProgress[0]);
     const actions = await populateActions(battleProgress[0]);
 
-    console.log('Battle Progress:', battleProgress)
+    console.log('User Weapons:', userWeapons);
 
     return (
       <>
           <h1 className="text-2xl font-semibold mb-6">Combat: </h1>
           <audio src="/audio/FO4_RiseAndPrevail.ogg" autoPlay loop />
           <div>
-              <Combat BattleInfo={battleProgress[0]} enemyCards={enemyCards} playerCards={playerCards} actions={actions} />
+              <Combat UserWeapons={userWeapons[0]} BattleInfo={battleProgress[0]} enemyCards={enemyCards} playerCards={playerCards} actions={actions} />
           </div>
       </>
     );
-  }
+
+}

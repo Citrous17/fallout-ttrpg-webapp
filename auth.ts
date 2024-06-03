@@ -8,7 +8,9 @@ import db from '@/app/lib/db';
 import type { User } from '@/app/lib/definitions';
 import bcrypt from 'bcrypt';
 import { sql } from '@vercel/postgres';
- 
+import { cookies } from 'next/headers'
+
+
 async function getUser(email: string): Promise<User | undefined> {
   try {
     const user = await sql`SELECT * FROM users WHERE email=${email}`;
@@ -35,6 +37,21 @@ export const { auth, signIn, signOut } = NextAuth({
           if (!user) return null;
           const passwordsMatch = await bcrypt.compare(password, user.password);
 
+          if (passwordsMatch) {
+
+            // Set the cookie with the UUID4 and email
+            const cookieOptions = {
+              maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week in milliseconds
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production', // Set to true in production
+              sameSite: 'strict',
+              path: '/',
+            };
+            
+            cookies().set('email', `${email}`, cookieOptions);
+
+            return user;
+          }
           if(passwordsMatch) return user;
         }
  

@@ -1,8 +1,14 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export const formatCurrency = (amount: number) => {
   return (amount / 100).toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
   });
+};
+
+export const generateUUID = (): string => {
+  return uuidv4();
 };
 
 export const formatDateToLocal = (

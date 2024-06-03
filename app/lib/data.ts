@@ -1,23 +1,14 @@
 // @ts-nocheck
 import { sql } from '@vercel/postgres';
-import { unstable_noStore as noStore } from 'next/cache';
-import db from './db';
 import {
-  CustomerField,
-  CustomersTableType,
-  InvoiceForm,
-  InvoicesTable,
-  LatestInvoice,
   Profile,
   User,
-  Revenue,
   Enemy,
   Battle,
+  Weapon,
 } from './definitions';
-import { formatCurrency } from './utils';
 
 export async function populateEnemyCards(battleProgress: any): Promise<Enemy[]> {
-  console.log('Battle Progress:', battleProgress)
   const enemyCards = [];
   for (const enemyID of battleProgress.enemies) {
     const data: Enemy = await fetchEnemyById(enemyID);
@@ -28,7 +19,6 @@ export async function populateEnemyCards(battleProgress: any): Promise<Enemy[]> 
 }
 
 export async function populatePlayerCards(battleProgress: any): Promise<Player[]> {
-  console.log('Battle Progress:', battleProgress)
   const playerCards = [];
   for (const playerID of battleProgress.players) {
     const data: Player = await fetchPlayerById(playerID);
@@ -38,8 +28,37 @@ export async function populatePlayerCards(battleProgress: any): Promise<Player[]
   return playerCards;
 }
 
+export async function fetchUserWeapons(email: string) {
+  try {
+    const data = await sql`SELECT id FROM users WHERE email=${email};`;
+    console.log('Data:', data.rows[0].id)
+    const data2 = await sql`SELECT weapons FROM players WHERE id=${data.rows[0].id};`
+    console.log('Data2:', data2.rows[0].weapons)
+    let weapons = [];
+    for(const weapon of data2.rows[0].weapons){
+      const data3 = await sql`SELECT * FROM weapons WHERE id=${weapon};`
+      weapons.push(data3.rows[0]);
+    }
+    console.log('Weapons:', weapons)
+    
+    const weaponList = weapons.map((weapon: any) => ({
+      id: weapon.id,
+      name: weapon.name,
+      damage: weapon.damage,
+      type: weapon.type,
+      value: weapon.value,
+      weight: weapon.weight,
+    }));
+
+    return weaponList;
+    return weapons
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch weapons.');
+  }
+}
+
 export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}> {
-  console.log('Fetching battle progress...');
   try {
     console.log('Fetching battle progress...');
     const data = await sql`SELECT * FROM BATTLES;`;
