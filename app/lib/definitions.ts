@@ -15,6 +15,7 @@ export type User = {
   image_url: string;
 };
 
+// @remove: This type is outdated and should be replaced with the Player type when refactoring the code
 export type Profile = {
   rads: number;
   hp: number;
@@ -159,6 +160,7 @@ export type Enemy = {
   id: string;
   image_url: string;
   name: string;
+  type: 'Normal' | 'Mighty' | 'Legendary';
   bodyStat: number;
   mindStat: number;
   meleeStat: number;
@@ -183,4 +185,13 @@ export type Enemy = {
   lootDrops: Loot[];
   skills: Skills;
   expand: boolean;
+  template: boolean;
+  caps: 0 | 1 | 2 | 3 | 4 | 5; // A rating from 0-5, 5 being the most rare. Rolls a d20 * caps to determine how many caps to drop
 }
+
+export type EnemyTableType = {
+  id: string;
+  name: string;
+  hp: number;
+  image_url: string;
+};

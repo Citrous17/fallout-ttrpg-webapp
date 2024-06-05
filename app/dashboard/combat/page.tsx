@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic"
 export const fetchCache = 'force-no-store';
 import { cookies } from 'next/headers'
 
+
+//@remove This function is outdated and should be removed
 async function populateActions(battleProgress: any) {
   
   const actions: string[] = [];

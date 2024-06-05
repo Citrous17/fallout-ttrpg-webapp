@@ -131,22 +131,17 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
     for(let i = 0; i < rolls; i++) {
       const roll = rolld20();
       if(roll == 20) {
-        console.log('Critical Success!');
         successes++;
         successes++;
       } else if(roll == 1) {
-        console.log('Critical Failure!');
+        // Currently does not do anything, but could be used to apply a negative effect
       }
       else if(roll <= target) {
-        console.log('Test Success!');
         // Check for Tag, which gives two successes if true
         if(tag) {
           successes++;
         }
         successes++;
-      }
-      else {
-        console.log('Test Failure!');
       }
     }
     if(successes > difficulty) {

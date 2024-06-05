@@ -6,6 +6,7 @@ import {
   Enemy,
   Battle,
   Weapon,
+  EnemyTableType
 } from './definitions';
 
 export async function populateEnemyCards(battleProgress: any): Promise<Enemy[]> {
@@ -58,6 +59,34 @@ export async function fetchUserWeapons(email: string) {
   }
 }
 
+export async function fetchPlayers() : Promise<Player[]>{
+  try {
+    const data = await sql`SELECT * FROM PLAYERS;`;
+
+    const players = data.rows.map((row: any) => ({
+      id: row.id,
+      image_url: row.image_url,
+      name: row.name,
+      level: row.level,
+      maxHP: row.maxhp,
+      hp: row.hp,
+      rads: row.rads,
+      xp: row.xp,
+      caps: row.caps,
+      origin: row.origin,
+      special: row.special,
+      defense: row.defense,
+      weapons: row.weapons,
+      skills: row.skills
+    }));
+
+    return players; // Ensure it returns an object with players key
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch player data.');
+  }
+}
+
 export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}> {
   try {
     console.log('Fetching battle progress...');
@@ -82,6 +111,36 @@ export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}
   catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch battle progress.');
+  }
+}
+
+export async function fetchFilteredEnemies(query: string) {
+  console.log('Query:', query)
+  try {
+    const data = await sql<EnemyTableType>`
+		SELECT
+      enemy.id,
+		  enemy.name,
+		  enemy.image_url,
+      enemy.maxhp 
+		FROM enemies enemy
+		WHERE
+		  enemy.name ILIKE ${`%${query}%`} AND
+      enemy.template = true
+		GROUP BY enemy.id, enemy.name, enemy.maxhp, enemy.image_url
+		ORDER BY enemy.name ASC
+	  `;
+
+    console.log('Data:', data.rows)
+
+    const enemies = data.rows.map((enemy) => ({
+      ...enemy
+    }));
+
+    return enemies;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch enemy table.');
   }
 }
 
@@ -157,7 +216,51 @@ export async function fetchEnemyById(id: string) {
   }
 }
 
-export async function fetchPlayerData(): Promise<{ profiles: Profile[] }> {
+export async function fetchEnemyDatabase(): Promise<Enemy[]> {
+  try {
+    const data = await sql`SELECT * FROM enemies WHERE template = false;`;
+    const enemyData = data.rows.map((row: any) => ({
+      id: row.id,
+      image_url: row.image_url,
+      name: row.name,
+      bodyStat: row.bodystat,
+      mindStat: row.mindstat,
+      meleeStat: row.meleestat,
+      gunsStat: row.gunsstat,
+      otherStat: row.otherstat,
+      initiative: row.initiative,
+      luckPoints: row.luckpoints,
+      physDR: row.physdr,
+      energyDR: row.energydr,
+      radDR: row.raddr,
+      poisonDR: row.poisondr,
+      maxHP: row.maxhp,
+      carryWeight: row.carryweight,
+      meleeBonus: row.meleebonus,
+      hp: row.hp,
+      xp: row.xp,
+      level: row.level,
+      special: row.special,
+      skills: row.skills,
+      defense: row.defense,
+      attacks: row.attacks,
+      weapons: row.weapons,
+      lootDrops: row.lootdrops,
+      expand: false,
+      template: true
+    }));
+
+    console.log('Enemy Data:', enemyData);
+
+    return enemyData; // Ensure it returns an object with enemies key
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch enemy data.');
+  }
+}
+
+//@remove This is a duplicate of fetchPlayers
+export async function fetchPlayerData(): Promise<Profile[]> {
   try {
     console.log('Fetching player data...');
     const data = await sql`SELECT * FROM PLAYERS;`;
@@ -182,7 +285,7 @@ export async function fetchPlayerData(): Promise<{ profiles: Profile[] }> {
     }));
     console.log('Player Data:', playerData);
 
-    return { profiles: playerData }; // Ensure it returns an object with profiles key
+    return playerData; // Ensure it returns an object with profiles key
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch player data.');

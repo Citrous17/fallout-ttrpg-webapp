@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import UUID from 'crypto';
 
 export const formatCurrency = (amount: number) => {
   return (amount / 100).toLocaleString('en-US', {
@@ -8,8 +8,20 @@ export const formatCurrency = (amount: number) => {
 };
 
 export const generateUUID = (): string => {
-  return uuidv4();
+  return UUID.randomUUID().toString();
 };
+
+export const getXPFromLevelAndType = (level: number, type: string) => {
+  switch(type) {
+    case 'Normal':
+      return 3 + (level * 7);
+    case 'Mighty':
+      return 6 + (level * 14);
+    case 'Legendary':
+      return 9 + (level * 21);
+  }
+  return 0;
+}
 
 export const formatDateToLocal = (
   dateStr: string,

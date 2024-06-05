@@ -1,9 +1,3 @@
-import {
-    BanknotesIcon,
-    ClockIcon,
-    UserGroupIcon,
-    InboxIcon,
-  } from '@heroicons/react/24/outline';
   import { lusitana } from '@/app/ui/fonts';
   import { fetchPlayerData } from '@/app/lib/data';
   import ProfileCard from '@/app/ui/players/profile';
@@ -12,12 +6,8 @@ import {
   } from '@/app/lib/definitions';
   import Image from 'next/image';
   import { useState } from 'react'
-  const iconMap = {
-    collected: BanknotesIcon,
-    customers: UserGroupIcon,
-    pending: ClockIcon,
-    invoices: InboxIcon,
-  };
+
+  //@update imports need to be updated
 
   export function PlayerCard({ player, expand }: any) {
     const [expanded, setExpanded] = useState(expand);

@@ -91,9 +91,10 @@ const battles = [
 
 const enemies = [
   {
-    id: '410544b2-4001-4271-9855-fec4b6a6442b',
+    id: '001',
     image_url: '/enemies/Raider.png',
     name: 'Raider',
+    type: 'Normal',
     bodyStat: -1,
     mindStat: -1,
     meleeStat: -1,
@@ -110,13 +111,47 @@ const enemies = [
     maxHP: 8,
     hp: 8,
     xp: 31,
+    level: 1,
+    caps: 1,
+    special: [6, 5, 6, 4, 5, 6, 5],
+    skills: [{'Athletics': [1, false]}, {'Big_Guns': [2, false]}, {'Energy_Weapons': [3, true]}, {'Melee_Weapons': [3, false]}, {'Science': [2, false]}, {'Small_Guns': [3, true]}, {'Survival': [1, false]}],
+    defense: 1,
+    attacks: [{'Melee': 'Shock Baton'}, {'Ranged': 'Institute Laser'}],
+    weapons: ['001'],
+    lootDrops: [],
+    expand: false,
+    template: true
+  },
+  {
+    id: '410544b2-4001-4271-9855-fec4b6a6442b',
+    image_url: '/enemies/Raider.png',
+    name: 'Raider',
+    bodyStat: -1,
+    mindStat: -1,
+    meleeStat: -1,
+    gunsStat: -1,
+    otherStat: -1,
+    initiative: 11,
+    luckPoints: 0,
+    carryWeight: 110,
+    meleeBonus: 0,
+    physDR: 1,
+    energyDR: 1,
+    radDR: 0,
+    caps: 1,
+    poisonDR: 0,
+    maxHP: 8,
+    hp: 8,
+    xp: 31,
     level: 2,
     special: [6, 5, 6, 4, 5, 6, 5],
     skills: [{'Athletics': [1, false]}, {'Big_Guns': [2, false]}, {'Energy_Weapons': [3, true]}, {'Melee_Weapons': [3, false]}, {'Science': [2, false]}, {'Small_Guns': [3, true]}, {'Survival': [1, false]}],
     defense: 1,
     attacks: [{'Melee': 'Shock Baton'}, {'Ranged': 'Institute Laser'}],
     weapons: ['001'],
-    lootDrops: []
+    lootDrops: [],
+    expand: false,
+    template: false
   },
   {
     id: '410544b2-4001-4271-9855-fec4b6a6442c',
@@ -144,7 +179,10 @@ const enemies = [
     defense: 1,
     attacks: [{'Melee': 'Shock Baton'}, {'Ranged': 'Institute Laser'}],
     weapons: ['Institute Laser', 'Shock Baton'],
-    lootDrops: []
+    lootDrops: [],
+    expand: false,
+    template: false,
+    caps: 1
   }
 ];
 
