@@ -95,6 +95,7 @@ export async function GET(request: Request) {
     }
   }
 
+  //@remove Populate actions like this shouldn't be doing this in the route
   async function populateActions(battleProgress: any) {
     const actions: string[] = [];
     const wrapInGreen = (text: string) => `<span class="text-green-500">${text}</span>`;

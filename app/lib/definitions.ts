@@ -108,6 +108,7 @@ export type Battle = {
   turn: number;
   enemies: UUID[];
   players: UUID[];
+  location: string;
 }
 
 export type Weapon = {
@@ -194,4 +195,14 @@ export type EnemyTableType = {
   name: string;
   hp: number;
   image_url: string;
-};
+  special: number[];
+}
+
+export type Location = {
+  id: string;
+  name: string;
+  image_url: string;
+  description: string;
+  quests: string[];
+  template: boolean;
+}

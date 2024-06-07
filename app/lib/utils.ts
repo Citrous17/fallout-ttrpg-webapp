@@ -1,4 +1,5 @@
 import UUID from 'crypto';
+import { Player, Enemy } from './definitions';
 
 export const formatCurrency = (amount: number) => {
   return (amount / 100).toLocaleString('en-US', {
@@ -36,6 +37,15 @@ export const formatDateToLocal = (
   const formatter = new Intl.DateTimeFormat(locale, options);
   return formatter.format(date);
 };
+
+export const getInitiative = (entity: Player | Enemy) => {
+  return entity.special[1] + entity.special[5]; // Perception + Agility
+}
+
+export const getTurnOrder = (entities: (Player | Enemy)[]) => {
+  const order = entities.sort((a, b) => getInitiative(b) - getInitiative(a));
+  return order.map(entity => entity.id);
+}
 
 export const wrapInGreen = (text: string) => `<span class="text-green-500">${text}</span>`;
 export const wrapInRed = (text: string) => `<span class="text-red-500">${text}</span>`;

@@ -80,12 +80,15 @@ const battles = [
   {
     id: '410544b2-4001-4271-9855-fec4b6a61233',
     title: 'Battle of Abernathy Farm',
+    date: '2024-06-07 08:00:00',
     description: 'The raiders are attacking the Abernathy Farm. Help defend the farm and save the Abernathy family.',
     image_url: '/battles/abernathy-farm.png',
     turnOrder: ['410544b2-4001-4271-9855-fec4b6a6442b', '410544b2-4001-4271-9855-fec4b6a6442a', '410544b2-4001-4271-9855-fec4b6a6442c', '410544b2-4001-4271-9855-fec4b6a6442'],
     turn: 0,
     enemies: ['410544b2-4001-4271-9855-fec4b6a6442b', '410544b2-4001-4271-9855-fec4b6a6442c'],
     players: ['410544b2-4001-4271-9855-fec4b6a6442a', '410544b2-4001-4271-9855-fec4b6a6442d'],
+    location: '410544b2-4001-4271-9855-fec4b6a6442f',
+    template: false
   }
 ]
 
@@ -190,14 +193,18 @@ const locations = [
   {
     id: '410544b2-4001-4271-9855-fec4b6a6442a',
     name: 'Vault 13',
+    image_url: '/locations/vault-13.png',
     description: 'The original Vault, home to the Vault Dweller',
     quests: ['Find the Water Chip', 'Rescue Tandi'],
-    enemies: {
-      'Radroach': 1,
-    },
-    lootDrops: ['Stimpack', 'Radaway'],
-    xp: 100,
-    caps: 100,
+    template: true
+  },
+  {
+    id: '410544b2-4001-4271-9855-fec4b6a6442f',
+    name: 'Abernathy Farm',
+    image_url: '/locations/abernathy-farm.png',
+    description: 'A small farm, known for growing Tatos',
+    quests: ['Defend Abernaty Farm!'],
+    template: true
   }
 ];
 

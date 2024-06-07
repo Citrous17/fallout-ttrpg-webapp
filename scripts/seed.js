@@ -6,6 +6,7 @@ const {
   weapons,
   enemies,
   battles,
+  locations,
 } = require('../app/lib/placeholder-data.js');
 const bcrypt = require('bcrypt');
 
@@ -179,12 +180,15 @@ async function seedBattles(client) {
       CREATE TABLE IF NOT EXISTS battles (
         id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
         title TEXT NOT NULL,
+        date TEXT NOT NULL,
         description TEXT NOT NULL,
         image_url TEXT NOT NULL,
         turnOrder TEXT[] NOT NULL,
         turn INT NOT NULL,
         enemies UUID[] NOT NULL,
-        players UUID[] NOT NULL
+        players UUID[] NOT NULL,
+        template BOOLEAN NOT NULL,
+        location TEXT NOT NULL
       );
     `;
 
@@ -196,8 +200,8 @@ async function seedBattles(client) {
     const insertedBattles = await Promise.all(
       battles.map(
         (battle) => sql`
-        INSERT INTO battles (id, title, description, image_url, turnOrder, turn, enemies, players)
-        VALUES (${battle.id}, ${battle.title}, ${battle.description}, ${battle.image_url}, ${battle.turnOrder}, ${battle.turn}, ${battle.enemies}, ${battle.players})
+        INSERT INTO battles (id, date, title, description, image_url, turnOrder, turn, enemies, players, template)
+        VALUES (${battle.id}, ${battle.date}, ${battle.title}, ${battle.description}, ${battle.image_url}, ${battle.turnOrder}, ${battle.turn}, ${battle.enemies}, ${battle.players}, ${battle.template})
         ON CONFLICT (id) DO NOTHING;
       `),
     );
@@ -265,12 +269,54 @@ async function seedPlayers(client) {
   }
 }
 
+async function seedLocations(client) {
+  try {
+    await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
+    // Create the "locations" table if it doesn't exist
+    const createTable = await sql`
+      CREATE TABLE IF NOT EXISTS locations (
+        id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        image_url TEXT NOT NULL,
+        quests TEXT[] NOT NULL,
+        template BOOLEAN NOT NULL
+      );
+    `;
+
+    console.log(`Created "locations" table`);
+
+    // Insert data into the "locations" table
+     const insertedLocations = await Promise.all(
+      locations.map(
+        (location) => sql`
+        INSERT INTO locations (id, name, description, image_url, quests, template)
+        VALUES (${location.id}, ${location.name}, ${location.description}, ${location.image_url}, ${location.quests}, ${location.template})
+        ON CONFLICT (id) DO NOTHING;
+      `),
+    );
+
+    console.log(`Seeded ${insertedLocations.length} locations`);
+
+    return {
+      createTable,
+      locations: insertedLocations,
+    };
+
+  } catch (error) {
+    console.error('Error seeding locations:', error);
+    throw error;
+  }
+}
+
 async function main() {
   await seedUsers(db);
   await seedPlayers(db);
   await seedWeapons(db);
   await seedEnemies(db);
   await seedBattles(db);
+  await seedLocations(db);
   await db.close();
 }
 

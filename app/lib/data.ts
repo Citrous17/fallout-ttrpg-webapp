@@ -122,12 +122,13 @@ export async function fetchFilteredEnemies(query: string) {
       enemy.id,
 		  enemy.name,
 		  enemy.image_url,
-      enemy.maxhp 
+      enemy.maxhp,
+      enemy.special
 		FROM enemies enemy
 		WHERE
 		  enemy.name ILIKE ${`%${query}%`} AND
       enemy.template = true
-		GROUP BY enemy.id, enemy.name, enemy.maxhp, enemy.image_url
+		GROUP BY enemy.id, enemy.name, enemy.maxhp, enemy.image_url, enemy.special
 		ORDER BY enemy.name ASC
 	  `;
 
@@ -299,5 +300,37 @@ export async function getUser(email: string) {
   } catch (error) {
     console.error('Failed to fetch user:', error);
     throw new Error('Failed to fetch user.');
+  }
+}
+
+export async function fetchLocations(query: string) {
+  console.log('Query:', query)
+  console.log('Fetching locations...')
+  try {
+    const data = await sql<EnemyTableType>`
+		SELECT
+      location.id,
+		  location.name,
+      location.description,
+		  location.image_url,
+      location.quests
+		FROM locations location
+		WHERE
+		  location.name ILIKE ${`%${query}%`} OR
+      location.template = true
+		GROUP BY location.id, location.name, location.description, location.image_url, location.quests
+		ORDER BY location.name ASC
+	  `;
+
+    console.log('Data:', data.rows)
+
+    const enemies = data.rows.map((enemy) => ({
+      ...enemy
+    }));
+
+    return enemies;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch location table.');
   }
 }
