@@ -58,9 +58,6 @@ export async function GET(request: Request) {
     try {
       const data = await sql`SELECT * FROM ENEMIES WHERE id=${id};`;
   
-      console.log('Data fetch completed.');
-      console.log('Enemy:', data.rows);
-  
       const enemy = data.rows.map((row: any) => ({
         id: row.id,
         image_url: row.image_url,
@@ -149,9 +146,6 @@ export async function POST(request: Request) {
         try {
           const data = await sql`SELECT * FROM ENEMIES WHERE id=${enemyID};`;
       
-          console.log('Data fetch completed.');
-          console.log('Enemy:', data.rows);
-      
           const enemy = data.rows.map((row: any) => ({
             id: row.id,
             image_url: row.image_url,
@@ -199,16 +193,12 @@ export async function POST(request: Request) {
   else if(request.headers.get('Post-Type') == 'getWeapon') {
 
     const requestBody = JSON.parse(await request.text())
-    console.log('ID:', requestBody)
     const res = await sql`SELECT * FROM weapons WHERE id = ${requestBody.id}`
 
     return Response.json({ message: 'Weapon fetched', weapon: res.rows[0] })
   } else if(request.headers.get('Post-Type') == 'updateHP') {
     const requestBody = JSON.parse(await request.text())
-
     const player = requestBody.player
-
-    console.log('HEALTH:', requestBody.hp)
 
     if(player) {
     const res = await sql`UPDATE players SET hp = ${requestBody.hp} WHERE id = ${requestBody.id}`
@@ -241,7 +231,6 @@ export async function POST(request: Request) {
     const requestBody = JSON.parse(await request.text())
 
     const res = await sql`DELETE FROM battles WHERE id = ${requestBody.id}`
-    console.log('RES:', res)
     return Response.json({ message: 'Battle finished!', battle: res.rows[0] })
   }
 }

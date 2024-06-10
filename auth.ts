@@ -4,7 +4,6 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from './auth.config';
 import { z } from 'zod';
-import db from '@/app/lib/db';
 import type { User } from '@/app/lib/definitions';
 import bcrypt from 'bcrypt';
 import { sql } from '@vercel/postgres';
@@ -28,7 +27,7 @@ export const { auth, signIn, signOut } = NextAuth({
     Credentials({
       async authorize(credentials) {
         const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
+          .object({ email: z.string().email(), password: z.string().min(6)})
           .safeParse(credentials);
  
         if (parsedCredentials.success) {
@@ -48,16 +47,7 @@ export const { auth, signIn, signOut } = NextAuth({
               path: '/',
             };
 
-            const unsafeCookieOptions = {
-              maxAge: 5 * 60 * 1000, // 5 minutes in milliseconds
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production', // Set to true in production
-              sameSite: 'strict',
-              path: '/',
-            };
-            
-            cookies().set('email', `${email}`, cookieOptions);
-            cookies().set('admin', `${'true'}`, unsafeCookieOptions);
+            cookies().set('name', `${user.username}`, cookieOptions);            
             return user;
           }
           if(passwordsMatch) return user;

@@ -1,11 +1,9 @@
 'use client'
 
-import {Enemy, Player } from '@/app/lib/definitions'
 import { EnemiesTable, PlayersTable, LocationsTable } from '@/app/ui/combat/table';
 import { createBattle } from '@/app/lib/actions';
 import { useFormState } from 'react-dom';
 import { useState } from 'react';
-import { getInitiative, getTurnOrder } from '@/app/lib/utils';
 import Link from 'next/link';
 import { Button } from '@/app/ui/button';
 
@@ -14,7 +12,6 @@ export default function formWrapper({filteredEnemies, players, locations, battle
     const [formData, setFormData] = useState<any>({});
     const [state, dispatch] = useFormState(() => createBattle(initialState, formData), initialState);
     const query = '';
-    console.log('DATA: ', formData)
     
     return(
     <>

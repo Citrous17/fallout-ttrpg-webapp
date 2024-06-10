@@ -12,11 +12,9 @@ import {
 export async function populateEnemyCards(battleProgress: any): Promise<Enemy[]> {
   const enemyCards = [];
   for (const enemyID of battleProgress.enemies) {
-    console.log('Enemy ID:', enemyID)
     const data: Enemy = await fetchEnemyById(enemyID);
     enemyCards.push(data);
   }
-  console.log('Enemy Cards:', enemyCards)
   return enemyCards;
 }
 
@@ -26,22 +24,18 @@ export async function populatePlayerCards(battleProgress: any): Promise<Player[]
     const data: Player = await fetchPlayerById(playerID);
     playerCards.push(data);
   }
-  console.log('Player Cards:', playerCards)
   return playerCards;
 }
 
 export async function fetchUserWeapons(email: string) {
   try {
     const data = await sql`SELECT id FROM users WHERE email=${email};`;
-    console.log('Data:', data.rows[0].id)
     const data2 = await sql`SELECT weapons FROM players WHERE id=${data.rows[0].id};`
-    console.log('Data2:', data2.rows[0].weapons)
     let weapons = [];
     for(const weapon of data2.rows[0].weapons){
       const data3 = await sql`SELECT * FROM weapons WHERE id=${weapon};`
       weapons.push(data3.rows[0]);
     }
-    console.log('Weapons:', weapons)
     
     const weaponList = weapons.map((weapon: any) => ({
       id: weapon.id,
@@ -53,7 +47,6 @@ export async function fetchUserWeapons(email: string) {
     }));
 
     return weaponList;
-    return weapons
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch weapons.');
@@ -90,7 +83,6 @@ export async function fetchPlayers() : Promise<Player[]>{
 
 export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}> {
   try {
-    console.log('Fetching battle progress...');
     const data = await sql`SELECT * FROM BATTLES;`;
     
     const battleProgress = data.rows.map((row: Battle) => ({
@@ -104,8 +96,6 @@ export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}
       players: row.players,
     }));
 
-    console.log('Battle Progress:', battleProgress);
-
     return { battleProgress }; // Ensure it returns an object with battleProgress key
 
   }
@@ -116,7 +106,6 @@ export async function fetchBattleProgress(): Promise<{ battleProgress: Battle[]}
 }
 
 export async function fetchFilteredEnemies(query: string) {
-  console.log('Query:', query)
   try {
     const data = await sql<EnemyTableType>`
 		SELECT
@@ -132,8 +121,6 @@ export async function fetchFilteredEnemies(query: string) {
 		GROUP BY enemy.id, enemy.name, enemy.maxhp, enemy.image_url, enemy.special
 		ORDER BY enemy.name ASC
 	  `;
-
-    console.log('Data:', data.rows)
 
     const enemies = data.rows.map((enemy) => ({
       ...enemy
@@ -177,9 +164,6 @@ export async function fetchPlayerById(id: string) {
 export async function fetchEnemyById(id: string) {
   try {
     const data = await sql`SELECT * FROM ENEMIES WHERE id=${id};`;
-
-    console.log('Data fetch completed.');
-    console.log('Enemy:', data.rows);
 
     const enemy = data.rows.map((row: any) => ({
       id: row.id,
@@ -252,8 +236,6 @@ export async function fetchEnemyDatabase(): Promise<Enemy[]> {
       template: true
     }));
 
-    console.log('Enemy Data:', enemyData);
-
     return enemyData; // Ensure it returns an object with enemies key
   } catch (error) {
     console.error('Database Error:', error);
@@ -264,7 +246,6 @@ export async function fetchEnemyDatabase(): Promise<Enemy[]> {
 export async function fetchActions(battleProgress: any) {
   try {
     const data = await sql`SELECT actions FROM battles WHERE id=${battleProgress.id};`;
-    console.log('Data:', data.rows)
 
     return data.rows[0].actions;
   } catch (error) {
@@ -276,11 +257,8 @@ export async function fetchActions(battleProgress: any) {
 //@remove This is a duplicate of fetchPlayers
 export async function fetchPlayerData(): Promise<Profile[]> {
   try {
-    console.log('Fetching player data...');
     const data = await sql`SELECT * FROM PLAYERS;`;
 
-    console.log('Data fetch completed.');
-    console.log('Data:', data);
     const playerData = data.rows.map((row: any) => ({
       id: row.id,
       image_url: row.image_url,
@@ -297,7 +275,6 @@ export async function fetchPlayerData(): Promise<Profile[]> {
       weapons: row.weapons,
       skills: row.skills
     }));
-    console.log('Player Data:', playerData);
 
     return playerData; // Ensure it returns an object with profiles key
   } catch (error) {
@@ -317,8 +294,6 @@ export async function getUser(email: string) {
 }
 
 export async function fetchLocations(query: string) {
-  console.log('Query:', query)
-  console.log('Fetching locations...')
   try {
     const data = await sql<EnemyTableType>`
 		SELECT
@@ -334,8 +309,6 @@ export async function fetchLocations(query: string) {
 		GROUP BY location.id, location.name, location.description, location.image_url, location.quests
 		ORDER BY location.name ASC
 	  `;
-
-    console.log('Data:', data.rows)
 
     const enemies = data.rows.map((enemy) => ({
       ...enemy

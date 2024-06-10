@@ -1,19 +1,13 @@
 import Combat from '@/app/ui/combat/Combat';
-import { Suspense } from 'react';
 import { fetchActions, fetchUserWeapons, populateEnemyCards, populatePlayerCards, fetchBattleProgress, fetchEnemyById, fetchPlayerById } from '@/app/lib/data';
-import { Player, Enemy, Battle } from '@/app/lib/definitions';
-import { Weapon } from '@/app/lib/definitions';
 export const dynamic = "force-dynamic"
 export const fetchCache = 'force-no-store';
 import { cookies } from 'next/headers'
-import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 export default async function Page() {
     const cookieStore = cookies();
     const userEmail = cookieStore.get('email') || ''; // Provide a default value of an empty string if userEmail is undefined
-    console.log('EMAIL:', userEmail ? userEmail.value : 'No email found');
     const { battleProgress } = await fetchBattleProgress();
-    console.log('BATTLE PROGRESS:', battleProgress)
     
     if(battleProgress.length === 0){
       return (

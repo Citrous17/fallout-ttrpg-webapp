@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import { useState } from 'react';
-import Dice from 'react-dice-roll';
 import { Player, Enemy, Battle, Weapon } from '@/app/lib/definitions';
 import { PlayerCard, EnemyCard } from '@/app/ui/combat/cards';
 import { wrapInBlue, wrapInGreen, wrapInRed, wrapInYellow } from '@/app/lib/utils';
@@ -16,10 +15,6 @@ interface CombatProps {
 }
 import Image from 'next/image';
 import { ChevronDoubleDownIcon, ChevronDoubleUpIcon } from '@heroicons/react/24/solid'; // Importing a Heroicon
-import { fetchBattleProgress } from '@/app/lib/data';
-import { populateEnemyCards, populatePlayerCards } from '@/app/lib/data';
-import { set } from 'zod';
-import { get } from 'http';
 
 export const dynamic = "force-dynamic"
 export const fetchCache = 'force-no-store';

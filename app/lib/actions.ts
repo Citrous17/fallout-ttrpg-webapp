@@ -7,10 +7,21 @@ import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
 import { generateUUID } from './utils';
-import { UUID } from "crypto";
+import bcrypt from 'bcrypt';
 
+const SignupSchema = z.object({
+  email: z.string({
+    invalid_type_error: 'Please enter an email address',
+  }),
+  password: z.string({
+    invalid_type_error: 'Please enter a password',
+  }),
+  username: z.string({
+    invalid_type_error: 'Please enter a name',
+  }),
+});
 
-const FormSchema = z.object({
+const BattleSchema = z.object({
   title: z.string({
     invalid_type_error: "Please enter a battle name"
   }),
@@ -55,7 +66,8 @@ const FormSchema = z.object({
 });
 
 
-const CreateBattle = FormSchema;
+const CreateBattle = BattleSchema;
+const CreateUser = SignupSchema;
 
 export type State = {
     errors?: {
@@ -70,7 +82,16 @@ export type State = {
     message?: string | null;
   };
 
-  export async function createBattle(prevState: State, formData: any) {
+export type SignupState = {
+  errors?: {
+    email?: string[];
+    password?: string[];
+    username?: string[];
+  };
+  message?: string | null;
+};
+
+export async function createBattle(prevState: State, formData: any) {
     //Validate using Zod
     const validatedFields = CreateBattle.safeParse({
       locations: formData.locations,
@@ -82,11 +103,8 @@ export type State = {
       players: formData.players
     })
 
-    console.log('VALIDATED FIELDS:', validatedFields)
-
     // If form validation fails, return errors early. Otherwise, continue.
     if (!validatedFields.success) {
-      console.log('ERRORS:', validatedFields.error.flatten().fieldErrors);
       return {
         errors: validatedFields.error.flatten().fieldErrors,
         message: 'Missing Fields. Failed to Create Battle.',
@@ -115,7 +133,6 @@ export type State = {
                 SELECT * FROM enemies WHERE name=${enemy.name};
             `
 
-            console.log('ENEMY OBJECT ROWS:', enemyObjectRows.rows[0])
             const enemyObject = enemyObjectRows.rows[0];
             enemyObject.id = enemy.id;
 
@@ -137,8 +154,6 @@ export type State = {
             ON CONFLICT (id) DO NOTHING;
         `;
     } catch (error) {
-        // If a database error occurs, return a more specific error.
-        console.log('ERROR:', error);
         return {
             message: 'Database Error: Failed to Create Battle.',
         };
@@ -149,6 +164,57 @@ export type State = {
     revalidatePath('/dashboard/combat/new');
     redirect('/dashboard/combat');
   }
+
+  export async function signup(prevState: SignupState , formData: FormData) {
+    try {
+      // Validate using Zod
+      console.log(formData);
+      const validatedFields = CreateUser.safeParse({
+        email: formData.get('email'),
+        password: formData.get('password'),
+        username: formData.get('username')
+      })
+  
+      // If form validation fails, return errors early. Otherwise, continue.
+      if (!validatedFields.success) {
+        console.log(validatedFields.error.flatten().fieldErrors);
+        return {
+          errors: validatedFields.error.flatten().fieldErrors,
+          message: 'Missing Fields. Failed to Create User.',
+        };
+      }
+
+      // Prepare data for insertion into the database
+      const { email, username } = validatedFields.data;
+      const password = await bcrypt.hash(validatedFields.data.password, 10);
+      const id = generateUUID();
+      const image_url = '/users/MissingImage.png'
+
+      // Insert data into the database
+      try {
+        await sql`
+          INSERT INTO users (id, username, email, password, role, image_url, created_at, updated_at)
+          VALUES (${id}, ${username}, ${email}, ${password}, ${'user'}, ${image_url}, NOW(), NOW());
+        `;
+      } catch (error: any) {
+        if(error.code === '23505') {
+          return {
+            message: 'Email already in use. Please contact support.',
+          };
+        }
+        console.log(error)
+        return {
+          message: 'Database Error: Failed to Create User.',
+        };
+      }
+    } catch (error) {
+      return {
+        message: 'Something went wrong. Failed to Create User.',
+      };   
+    }
+    redirect('/login');
+  }
+
 
   export async function authenticate(
     prevState: string | undefined,
