@@ -261,6 +261,18 @@ export async function fetchEnemyDatabase(): Promise<Enemy[]> {
   }
 }
 
+export async function fetchActions(battleProgress: any) {
+  try {
+    const data = await sql`SELECT actions FROM battles WHERE id=${battleProgress.id};`;
+    console.log('Data:', data.rows)
+
+    return data.rows[0].actions;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch actions.');
+  }
+}
+
 //@remove This is a duplicate of fetchPlayers
 export async function fetchPlayerData(): Promise<Profile[]> {
   try {

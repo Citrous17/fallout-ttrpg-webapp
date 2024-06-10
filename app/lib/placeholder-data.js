@@ -58,6 +58,23 @@ const players = [
 
 const weapons = [
   {
+    id: '000',
+    image_url: '/weapons/unarmed.png',
+    type: 'Unarmed',
+    attack_type: 'Melee',
+    name: 'Unarmed Strike',
+    ammo_type: 'None',
+    weight: 0,
+    value: 0,
+    rarity: 0,
+    combatDice: 2,
+    DamageEffects: 'None',
+    DamageType: 'Physical',
+    range: 'C',
+    wield: 'One-Handed',
+    fire_rate: 2
+  },
+  {
     id: '001',
     image_url: '/weapons/10mm-pistol.png',
     type: 'Small Guns',
@@ -73,7 +90,59 @@ const weapons = [
     range: 'C',
     wield: 'One-Handed',
     fire_rate: 2
+  },
+  {
+    id: '002',
+    image_url: '/weapons/double-barrel.png',
+    type: 'Small Guns',
+    attack_type: 'Ranged',
+    name: 'Double-Barrel Shotgun',
+    ammo_type: 'Shotgun Shell',
+    weight: 9,
+    value: 39,
+    rarity: 1,
+    combatDice: 5,
+    DamageEffects: ['Spread', 'Vicious'],
+    DamageType: 'Physical',
+    range: 'C',
+    wield: 'Two-Handed',
+    fire_rate: 0
+  },
+  {
+    id: '003',
+    image_url: '/weapons/machete.png',
+    type: 'Melee',
+    attack_type: 'Melee',
+    name: 'Machete',
+    ammo_type: 'None',
+    weight: 2,
+    value: 25,
+    rarity: 1,
+    combatDice: 3,
+    DamageEffects: ['Piercing 1'],
+    DamageType: 'Physical',
+    range: 'C',
+    wield: 'One-Handed',
+    fire_rate: 2
+  },
+  {
+    id: '004',
+    image_url: '/weapons/molotov.png',
+    type: 'Explosive',
+    attack_type: 'Thrown',
+    name: 'Molotov Cocktail',
+    ammo_type: 'Molotov Cocktail',
+    weight: 9,
+    value: 39,
+    rarity: 1,
+    combatDice: 4,
+    DamageEffects: 'None',
+    DamageType: 'Energy',
+    range: 'M',
+    wield: 'Two-Handed',
+    fire_rate: 2
   }
+
 ];
 
 const battles = [
@@ -88,7 +157,8 @@ const battles = [
     enemies: ['410544b2-4001-4271-9855-fec4b6a6442b', '410544b2-4001-4271-9855-fec4b6a6442c'],
     players: ['410544b2-4001-4271-9855-fec4b6a6442a', '410544b2-4001-4271-9855-fec4b6a6442d'],
     location: '410544b2-4001-4271-9855-fec4b6a6442f',
-    template: false
+    template: false,
+    actions: ['A battle has begun!', 'The raiders are attacking the Abernathy Farm. Help defend the farm and save the Abernathy family.']
   }
 ]
 
@@ -121,6 +191,38 @@ const enemies = [
     defense: 1,
     attacks: [{'Melee': 'Shock Baton'}, {'Ranged': '10mm Pistol'}],
     weapons: ['001'],
+    lootDrops: [],
+    expand: false,
+    template: true
+  },
+  {
+    id: '002',
+    image_url: '/enemies/RaiderPsycho.png',
+    name: 'Raider Psycho',
+    type: 'Normal',
+    bodyStat: -1,
+    mindStat: -1,
+    meleeStat: -1,
+    gunsStat: -1,
+    otherStat: -1,
+    initiative: 12,
+    luckPoints: 0,
+    carryWeight: 130,
+    meleeBonus: 1,
+    physDR: 1,
+    energyDR: 2,
+    radDR: 0,
+    poisonDR: 0,
+    maxHP: 14,
+    hp: 14,
+    xp: 52,
+    level: 1,
+    caps: 1,
+    special: [7, 6, 7, 4, 5, 6, 4],
+    skills: [{'Athletics': [1, false]}, {'Energy_Weapons': [1, false]}, {'Medicine': [2, false]}, {'Melee_Weapons': [3, true]}, {'Repair': [1, false]}, {'Science': [1, false]}, {'Small_Guns': [2, true]}, {'Sneak': [1, false]}, {'Survival': [2, false]}, {'Throwing': [1, false]}, {'Unarmed': [1, false]}],
+    defense: 1,
+    attacks: [{'Unarmed': 'Unarmed Strike'}, {'Melee': 'Machete'}, {'Ranged': 'Double-Barrel Shotgun'}, {'Explosive': 'Molotov Cocktail'}],
+    weapons: ['000', '003', '002', '004'],
     lootDrops: [],
     expand: false,
     template: true

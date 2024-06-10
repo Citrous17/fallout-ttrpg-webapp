@@ -18,6 +18,8 @@ import Image from 'next/image';
 import { ChevronDoubleDownIcon, ChevronDoubleUpIcon } from '@heroicons/react/24/solid'; // Importing a Heroicon
 import { fetchBattleProgress } from '@/app/lib/data';
 import { populateEnemyCards, populatePlayerCards } from '@/app/lib/data';
+import { set } from 'zod';
+import { get } from 'http';
 
 export const dynamic = "force-dynamic"
 export const fetchCache = 'force-no-store';
@@ -30,6 +32,7 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
   const [turnOrder, setTurnOrder] = useState<string[]>(BattleInfo.turnOrder);
   const [recentActions, setRecentActions] = useState<string[]>([]);
   const [actionsList, setActionsList] = useState(true);
+  const [displayActions, setDisplayActions] = useState<String[]>(actions.slice(-5));
  
   useEffect(() => {
     if (recentActions.length > 0) {
@@ -94,12 +97,38 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
       cache:"no-cache"
     });
 
+    const currentTime = new Date().toLocaleTimeString();
+
+    if(isPlayer(getCurrentPlayer()?.id)) {
+      let message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(getCurrentPlayer()?.name)} has ended their turn!` 
+      setRecentActions([...recentActions, message]);
+      setDisplayActions(([...displayActions, message]).slice(-5));
+    } else {
+      let message = `[${wrapInBlue(currentTime)}] ${wrapInRed(getCurrentPlayer()?.name)} has ended their turn!` 
+      setRecentActions([...recentActions, message]);
+      setDisplayActions(([...displayActions, message]).slice(-5));
+    }
+
     setTurn(turn + 1);
   }
 
   function playAudio(audio: string) {
     const audioElement = new Audio(audio);
     audioElement.play();
+  }
+
+  async function sendActionMessage(message: string) {
+    const currentTime = new Date().toLocaleTimeString();
+    const data = await fetch('/api/battle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Post-Type': 'actionMessage',
+      },
+      body: JSON.stringify({ id: BattleInfo.id, message }),
+      cache:"no-cache"
+    });
+    setRecentActions([...recentActions, `[${wrapInBlue(currentTime)}] ${message}`]);
   }
 
   async function getStats(id: string, type: string) {
@@ -184,9 +213,6 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
     // 2. Inflict Damage
     // 3. Reduce Ammuniton
 
-    // Play Audio
-    playAudio('/audio/weapons/10mm Pistol.ogg');
-
     const defenderType = isPlayer(defender.id) ? 'player' : 'enemy';
 
     await getStats(defender.id, defenderType).then((stats) => {
@@ -194,9 +220,14 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
     });
 
     const weapon = await getWeaponFromId(weaponID)
+    if (!weapon) {
+      throw new Error('Weapon not found');
+    }
+    // Play Audio
+    playAudio('/audio/weapons/' + weapon.name + '.ogg')
 
     let hit = false
-    console.log(weapon);
+    let message;
     let damage = 0;
 
     switch(weapon.attack_type) {
@@ -236,37 +267,40 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
         break;
     }
     let died = false;
+    const newHealth = defender.hp - damage;
+    if(newHealth <= 0) {
+      died = true;
+    } 
+
     if(hit) {
       const currentTime = new Date().toLocaleTimeString();
-      let message;
-      if(isPlayer(attacker.id)) {
-      message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} attacked ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+      if(died) {
+        if(isPlayer(attacker.id)) {
+          message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} killed ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+          } else {
+          message = `[${wrapInBlue(currentTime)}] ${wrapInRed(attacker.name)} killed ${wrapInGreen(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!!!`;
+          }
       } else {
-      message = `[${wrapInBlue(currentTime)}] ${wrapInRed(attacker.name)} attacked ${wrapInGreen(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+        if(isPlayer(attacker.id)) {
+        message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} attacked ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+        } else {
+        message = `[${wrapInBlue(currentTime)}] ${wrapInRed(attacker.name)} attacked ${wrapInGreen(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+        }
+        const data = await fetch('/api/battle', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Post-Type': 'updateHP',
+          },
+          body: JSON.stringify({ player: isPlayer(defender.id), id: defender.id, hp: newHealth}),
+        });
       }
+      setDisplayActions(([...displayActions, message]).slice(-5));
       setRecentActions([...recentActions, message]);
-      console.log('Defender Health:', defender.hp)
-      const newHealth = defender.hp - damage;
-      
-      if(newHealth <= 0) {
-        died = true;
-      } else {
-
-      const data = await fetch('/api/battle', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Post-Type': 'updateHP',
-        },
-        body: JSON.stringify({ player: isPlayer(defender.id), id: defender.id, hp: newHealth}),
-      });
-    
-    }
     }
 
     if(!hit) {
       const currentTime = new Date().toLocaleTimeString();
-      let message;
       if(isPlayer(attacker.id)) {
       message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} tried to attack ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and missed!`;
       } else {
@@ -277,25 +311,26 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
 
     await updateCards();
 
+
     const response = await fetch('/api/battle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Post-Type': 'attack',
       },
-      body: JSON.stringify({ id: BattleInfo.id, weapon, attacker, defender, died, turnOrder }),
+      body: JSON.stringify({ id: BattleInfo.id, weapon, attacker, defender, died, turnOrder, message }),
       cache:"no-cache"
     });
 
     const responseData = await response.json();
 
-    console.log("RESPONSE DATA:", responseData)
     if(responseData.message === 'Enemy defeated') {
-      console.log(responseData.enemies)
-
       setEnemies(responseData.enemies);
       setTurnOrder(responseData.turnOrder);
     }
+    setDisplayActions((responseData.actions).slice(-5))
+    actions = responseData.actions;
+    
   }
   
   const handleToggleActions = () => {
@@ -403,13 +438,38 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
   }
 
   const currentWeapon = getCurrentWeapon();
-  const displayActions = actions.slice(-10);
-
-  console.log('Turn Order:', turnOrder);
-  console.log('Players: ', players);
-  console.log('Enemies: ', enemies);
-
+  
+  if (BattleInfo.enemies.length === 0) {
+    return (
+      <>
+      <div className="text-2xl font-bold text-green-500">
+        Battle Won!
+      </div>
+      {admin && (
+        <button
+          onClick={async (e: any) => {
+            const response = await fetch('/api/battle', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Post-Type': 'endBattle',
+              },
+              body: JSON.stringify({ id: BattleInfo.id }),
+            });
+            const data = await response.json();
+            console.log(data);
+          }}
+          className="bg-red-500 text-black py-2 px-8 rounded-md hover:bg-darkred-600 focus:outline-none focus:ring-2 focus:ring-darkred-500"
+        >
+          End Battle
+        </button>
+      )
+      }
+      </>
+    );
+  }
   return (
+
     <div className="min-h-screen bg-gray-100 flex flex-col items-center relative">
       <div className="absolute top-0 left-0 m-4">
         {/* Turn Order Cards */}
@@ -486,7 +546,7 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
           onClick={increaseTurn}
           className="bg-yellow-400 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Next Turn
+          End Turn
         </button>
       </div>
 

@@ -133,7 +133,11 @@ export async function POST(request: Request) {
   } 
   else if(request.headers.get('Post-Type') == 'attack') {
     const requestBody = JSON.parse(await request.text());
-    console.log('REQUEST BODY:', requestBody)
+    const passMessages = await sql`SELECT actions FROM battles WHERE id = ${requestBody.id}`;
+    const messages = passMessages.rows[0].actions;
+    messages.push(requestBody.message)
+    const mesRes = await sql`UPDATE battles SET actions = ${messages} WHERE id = ${requestBody.id}`;
+
     if(requestBody.died) {
       const updatedTurnOrder = requestBody.turnOrder.filter((id: string) => id !== requestBody.defender.id);
       const res = await sql`DELETE FROM enemies WHERE id = ${requestBody.defender.id}`
@@ -178,22 +182,19 @@ export async function POST(request: Request) {
             expand: false
           }));
           
-          console.log('ENEMY:', enemy[0])
-      
           return enemy[0]; // Ensure it returns an object with enemy key
         } catch (error) {
           console.error('Database Error:', error);
           throw new Error('Failed to fetch enemy data.');
         }
       }))
-      console.log('ENEMY DATA:', enemyData)
-      return Response.json({ message: 'Enemy defeated', enemies: enemyData, turnOrder: updatedTurnOrder})
+      return Response.json({ message: 'Enemy defeated', enemies: enemyData, turnOrder: updatedTurnOrder, actions: messages})
     
     } else {
     const res = await sql`UPDATE battles SET turn = turn + 1 WHERE id = ${requestBody.id}`;
     }
 
-    return Response.json({ message: 'Attack complete' });
+    return Response.json({ message: 'Attack complete', actions: messages});
   }
   else if(request.headers.get('Post-Type') == 'getWeapon') {
 
@@ -236,5 +237,11 @@ export async function POST(request: Request) {
     }
     return Response.json({ message: 'No stats found' })
 
+  } else if(request.headers.get('Post-Type') == 'endBattle') {
+    const requestBody = JSON.parse(await request.text())
+
+    const res = await sql`DELETE FROM battles WHERE id = ${requestBody.id}`
+    console.log('RES:', res)
+    return Response.json({ message: 'Battle finished!', battle: res.rows[0] })
   }
 }

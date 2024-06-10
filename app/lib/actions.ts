@@ -72,7 +72,6 @@ export type State = {
 
   export async function createBattle(prevState: State, formData: any) {
     //Validate using Zod
-    console.log('CREATING BATTLEEEEEEEEEEEEEEEEEE:', formData);
     const validatedFields = CreateBattle.safeParse({
       locations: formData.locations,
       title: formData.name, // Switched from name to title for naming convention
@@ -107,17 +106,34 @@ export type State = {
     const formattedTurnOrder = `{${turnOrder.map(item => `"${item}"`).join(',')}}`;
     const formattedEnemies = `{${enemies.map(enemy => `"${enemy.id}"`).join(',')}}`;
     const formattedPlayers = `{${players.map(player => `"${player.id}"`).join(',')}}`;
-
-    console.log(`
-    INSERT INTO battles (id, title, date, description, image_url, turnOrder, turn, enemies, players, template)
-    VALUES (${id}, ${title}, ${date}, ${description}, ${image_url}, ${formattedTurnOrder}, ${0}, ${formattedEnemies}, ${formattedPlayers}, ${false})
-    ON CONFLICT (id) DO NOTHING;
-    `);
+    const actions = `{A battle has begun!, ${description}}`;
 
     try {
+        // Insert the enemies into the database
+        for (const enemy of enemies) {
+            let enemyObjectRows = await sql`
+                SELECT * FROM enemies WHERE name=${enemy.name};
+            `
+
+            console.log('ENEMY OBJECT ROWS:', enemyObjectRows.rows[0])
+            const enemyObject = enemyObjectRows.rows[0];
+            enemyObject.id = enemy.id;
+
+            const attacksJSON = JSON.stringify(enemyObject.attacks);
+            const weaponsJSON = JSON.stringify(enemyObject.weapons);
+            const lootDropsJSON = JSON.stringify(enemyObject.lootdrops);
+
+            await sql`
+            INSERT INTO enemies (id, image_url, name, bodyStat, mindStat, meleeStat, gunsStat, otherStat, initiative, luckPoints, physDR, energyDR, radDR, poisonDR, maxHP, carryWeight, meleeBonus, hp, xp, level, special, defense, attacks, weapons, lootDrops, expand, template, caps)
+            VALUES (${enemyObject.id}, ${enemyObject.image_url}, ${enemyObject.name}, ${enemyObject.bodystat}, ${enemyObject.mindstat}, ${enemyObject.meleestat}, ${enemyObject.gunsstat}, ${enemyObject.otherstat}, ${enemyObject.initiative}, ${enemyObject.luckpoints}, ${enemyObject.physdr}, ${enemyObject.energydr}, ${enemyObject.raddr}, ${enemyObject.poisondr}, ${enemyObject.maxhp}, ${enemyObject.carryweight}, ${enemyObject.meleebonus}, ${enemyObject.hp}, ${enemyObject.xp}, ${enemyObject.level}, ${enemyObject.special}, ${enemyObject.defense}, ${attacksJSON}, ${weaponsJSON}, ${lootDropsJSON}, ${enemyObject.expand}, ${enemyObject.template}, ${enemyObject.caps})
+            ON CONFLICT (id) DO NOTHING;
+          `;
+        }
+
+        // Insert the battle into the database
         await sql`
-            INSERT INTO battles (id, title, date, description, image_url, turnOrder, turn, enemies, players, template)
-            VALUES (${id}, ${title}, ${date}, ${description}, ${image_url}, ${formattedTurnOrder}, ${0}, ${formattedEnemies}, ${formattedPlayers}, ${false})
+            INSERT INTO battles (id, title, date, description, image_url, turnOrder, turn, enemies, players, template, location, actions)
+            VALUES (${id}, ${title}, ${date}, ${description}, ${image_url}, ${formattedTurnOrder}, ${0}, ${formattedEnemies}, ${formattedPlayers}, ${false}, ${locations[0].id}, ${actions})
             ON CONFLICT (id) DO NOTHING;
         `;
     } catch (error) {
