@@ -7,6 +7,7 @@ import { PlayerCard, EnemyCard } from '@/app/ui/combat/cards';
 import { wrapInBlue, wrapInGreen, wrapInRed, wrapInYellow } from '@/app/lib/utils';
 import { useEffect } from 'react';
 interface CombatProps {
+    admin: boolean;
     UserWeapons: Weapon;
     BattleInfo: Battle;
     enemyCards: Enemy[];
@@ -21,7 +22,7 @@ import { populateEnemyCards, populatePlayerCards } from '@/app/lib/data';
 export const dynamic = "force-dynamic"
 export const fetchCache = 'force-no-store';
 
-const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: CombatProps) => {
+const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actions }: CombatProps) => {
   const [showActions, setShowActions] = useState(false);
   const [enemies, setEnemies] = useState<Enemy[]>(enemyCards);
   const [players, setPlayers] = useState<Player[]>(playerCards);
@@ -210,7 +211,12 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
 
     if(hit) {
       const currentTime = new Date().toLocaleTimeString();
-      const message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} attacked ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+      let message;
+      if(isPlayer(attacker.id)) {
+      message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} attacked ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+      } else {
+      message = `[${wrapInBlue(currentTime)}] ${wrapInRed(attacker.name)} attacked ${wrapInGreen(defender.name)} with ${wrapInYellow(weapon.name)} and hit for ${wrapInRed(String(damage))} damage!`;
+      }
       setRecentActions([...recentActions, message]);
       console.log('Defender Health:', defender.hp)
       const newHealth = defender.hp - damage;
@@ -233,7 +239,12 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
 
     if(!hit) {
       const currentTime = new Date().toLocaleTimeString();
-      const message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} tried to attack ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and missed!`;
+      let message;
+      if(isPlayer(attacker.id)) {
+      message = `[${wrapInBlue(currentTime)}] ${wrapInGreen(attacker.name)} tried to attack ${wrapInRed(defender.name)} with ${wrapInYellow(weapon.name)} and missed!`;
+      } else {
+      message = `[${wrapInBlue(currentTime)}] ${wrapInRed(attacker.name)} tried to attack ${wrapInGreen(defender.name)} with ${wrapInYellow(weapon.name)} and missed!`;
+      }
       setRecentActions([...recentActions, message]);
     }
 
@@ -256,6 +267,8 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
   function getTurnCardImage(id: string) {
     const playerCard = playerCards.find(card => card.id === id);
     const enemyCard = enemyCards.find(card => card.id === id);
+    console.log('Player Card:', playerCard)
+    console.log('Enemy Card:', enemyCard)
     return (playerCard?.image_url ?? enemyCard?.image_url) ?? '/enemies/MissingImage.png';
   }
 
@@ -288,12 +301,28 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
   }
 
   function getCurrentPlayer() {
-    const currentPlayer = playerCards.find(card => card.id === turnOrder[0]);
+    let currentPlayer: Player | Enemy | undefined = playerCards.find(card => card.id === turnOrder[0]);
+    if(!currentPlayer) {
+      currentPlayer = enemyCards.find(card => card.id === turnOrder[0]) as Enemy;
+    }
     return currentPlayer;
   }
 
   async function getCurrentWeapon() {
     const currentPlayer = playerCards.find(card => card.id === turnOrder[0]);
+    if (!currentPlayer) {
+      const enemyCard = enemyCards.find(card => card.id === turnOrder[0]);
+      if (enemyCard) {
+        const weaponID = enemyCard.weapons[0];
+        let weapon = await getWeaponFromId(weaponID);
+        if (!weapon) {
+          throw new Error('Weapon not found');
+        }
+        return weapon;
+      }
+      throw new Error('Weapon not found');
+    }
+
     if(currentPlayer) {
       const weaponID= currentPlayer.weapons[0];
       let weapon = await getWeaponFromId(weaponID);
@@ -306,6 +335,7 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
   }
 
   async function getWeaponFromId(id: string) {
+
     const data = await fetch('/api/battle', {
       method: 'POST',
       headers: {
@@ -328,6 +358,10 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
 
   const currentWeapon = getCurrentWeapon();
   const displayActions = actions.slice(-10);
+
+
+
+  console.log('Admin:', admin)
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center relative">
@@ -418,14 +452,25 @@ const Combat = ({ UserWeapons, BattleInfo, enemyCards, playerCards, actions }: C
         </div>
       </div>
 
+    
+
       {/* Spacer */}
       <div className="flex-grow"></div>
 
       {/* Player Cards */}
       <div className="flex flex-wrap justify-center">
+
         {players.map((player, index) => (
           <div key={index} className={`${getCardColor(player.id)} p-4 m-2 rounded-lg text-center shadow-md min-w-[200px]`}>
             <PlayerCard key={index} player={player} />
+            {admin && (
+              <button
+                onClick={async (e: any) => handleAttack(getCurrentPlayer()?.weapons[0] || '', getCurrentPlayer(), player)}
+                className="bg-red-500 text-black py-2 px-8 rounded-md hover:bg-darkred-600 focus:outline-none focus:ring-2 focus:ring-darkred-500"
+              >
+                Attack
+              </button>
+            )}
           </div>
         ))}
       </div>

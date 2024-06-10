@@ -6,6 +6,7 @@ import { Weapon } from '@/app/lib/definitions';
 export const dynamic = "force-dynamic"
 export const fetchCache = 'force-no-store';
 import { cookies } from 'next/headers'
+import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 
 //@remove This function is outdated and should be removed
@@ -33,15 +34,14 @@ export default async function Page() {
     const enemyCards = await populateEnemyCards(battleProgress[0]);
     const playerCards = await populatePlayerCards(battleProgress[0]);
     const actions = await populateActions(battleProgress[0]);
-
-    console.log('User Weapons:', userWeapons);
+    const admin = cookies().get('admin')?.value === 'true' ? true : false;
 
     return (
       <>
           <h1 className="text-2xl font-semibold mb-6">Combat: </h1>
           <audio src="/audio/FO4_RiseAndPrevail.ogg" autoPlay loop />
           <div>
-              <Combat UserWeapons={userWeapons[0]} BattleInfo={battleProgress[0]} enemyCards={enemyCards} playerCards={playerCards} actions={actions} />
+              <Combat admin={admin} UserWeapons={userWeapons[0]} BattleInfo={battleProgress[0]} enemyCards={enemyCards} playerCards={playerCards} actions={actions} />
           </div>
       </>
     );

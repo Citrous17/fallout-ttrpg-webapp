@@ -200,8 +200,8 @@ async function seedBattles(client) {
     const insertedBattles = await Promise.all(
       battles.map(
         (battle) => sql`
-        INSERT INTO battles (id, date, title, description, image_url, turnOrder, turn, enemies, players, template)
-        VALUES (${battle.id}, ${battle.date}, ${battle.title}, ${battle.description}, ${battle.image_url}, ${battle.turnOrder}, ${battle.turn}, ${battle.enemies}, ${battle.players}, ${battle.template})
+        INSERT INTO battles (id, date, title, description, image_url, turnOrder, turn, enemies, players, template, location)
+        VALUES (${battle.id}, ${battle.date}, ${battle.title}, ${battle.description}, ${battle.image_url}, ${battle.turnOrder}, ${battle.turn}, ${battle.enemies}, ${battle.players}, ${battle.template}, ${battle.location})
         ON CONFLICT (id) DO NOTHING;
       `),
     );

@@ -1,3 +1,5 @@
+//@ts-ignore
+
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Weapon, Enemy, Player } from '@/app/lib/definitions';
 import { sql } from '@vercel/postgres';
@@ -137,8 +139,9 @@ export async function POST(request: Request) {
     return Response.json({ message: 'Turn incremented' });
   }
   else if(request.headers.get('Post-Type') == 'getWeapon') {
-    const requestBody = JSON.parse(await request.text())
 
+    const requestBody = JSON.parse(await request.text())
+    console.log('ID:', requestBody)
     const res = await sql`SELECT * FROM weapons WHERE id = ${requestBody.id}`
 
     return Response.json({ message: 'Weapon fetched', weapon: res.rows[0] })

@@ -12,6 +12,7 @@ import {
 export async function populateEnemyCards(battleProgress: any): Promise<Enemy[]> {
   const enemyCards = [];
   for (const enemyID of battleProgress.enemies) {
+    console.log('Enemy ID:', enemyID)
     const data: Enemy = await fetchEnemyById(enemyID);
     enemyCards.push(data);
   }

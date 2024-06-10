@@ -1,4 +1,3 @@
-//@ts-nocheck
 'use server';
 
 import { z } from 'zod';
@@ -78,7 +77,7 @@ export type State = {
       locations: formData.locations,
       title: formData.name, // Switched from name to title for naming convention
       description: formData.description,
-      image_url: formData.image_url,
+      image_url: `/battles/` + formData.image_url,
       turnOrder: formData.turnOrder,
       enemies: formData.enemies,
       players: formData.players
@@ -106,13 +105,19 @@ export type State = {
     // Insert data into the database
     // Format arrays as Postgres array literals
     const formattedTurnOrder = `{${turnOrder.map(item => `"${item}"`).join(',')}}`;
-    const formattedEnemies = JSON.stringify(enemies);
-    const formattedPlayers = JSON.stringify(players);
+    const formattedEnemies = `{${enemies.map(enemy => `"${enemy.id}"`).join(',')}}`;
+    const formattedPlayers = `{${players.map(player => `"${player.id}"`).join(',')}}`;
+
+    console.log(`
+    INSERT INTO battles (id, title, date, description, image_url, turnOrder, turn, enemies, players, template)
+    VALUES (${id}, ${title}, ${date}, ${description}, ${image_url}, ${formattedTurnOrder}, ${0}, ${formattedEnemies}, ${formattedPlayers}, ${false})
+    ON CONFLICT (id) DO NOTHING;
+    `);
 
     try {
         await sql`
-            INSERT INTO battles (id, date, title, description, image_url, turnOrder, turn, enemies, players)
-            VALUES (${id}, ${date}, ${title}, ${description}, ${image_url}, ${formattedTurnOrder}, ${0}, ${formattedEnemies}, ${formattedPlayers})
+            INSERT INTO battles (id, title, date, description, image_url, turnOrder, turn, enemies, players, template)
+            VALUES (${id}, ${title}, ${date}, ${description}, ${image_url}, ${formattedTurnOrder}, ${0}, ${formattedEnemies}, ${formattedPlayers}, ${false})
             ON CONFLICT (id) DO NOTHING;
         `;
     } catch (error) {
@@ -123,89 +128,11 @@ export type State = {
         };
     }
 
-    console.log('BATTLE CREATED:', id, date, title, description, image_url, turnOrderString, 0, enemies, players)
-    
+  
     // Revalidate the cache for the combat page and redirect the user.
     revalidatePath('/dashboard/combat/new');
     redirect('/dashboard/combat');
   }
-
-  //@remove These invoice functions need to be removed before prod
-  /* export async function createInvoice(prevState: State, formData: FormData) {
-    // Validate form using Zod
-    const validatedFields = CreateInvoice.safeParse({
-      customerId: formData.get('customerId'),
-      amount: formData.get('amount'),
-      status: formData.get('status'),
-    });
-   
-    // If form validation fails, return errors early. Otherwise, continue.
-    if (!validatedFields.success) {
-      return {
-        errors: validatedFields.error.flatten().fieldErrors,
-        message: 'Missing Fields. Failed to Create Invoice.',
-      };
-    }
-   
-    // Prepare data for insertion into the database
-    const { customerId, amount, status } = validatedFields.data;
-    const amountInCents = amount * 100;
-    const date = new Date().toISOString().split('T')[0];
-   
-    // Insert data into the database
-    try {
-      await db.query(`
-        INSERT INTO invoices (customer_id, amount, status, date)
-        VALUES ('${customerId}', '${amountInCents}', '${status}', '${date}')
-      `);
-    } catch (error) {
-      // If a database error occurs, return a more specific error.
-      return {
-        message: 'Database Error: Failed to Create Invoice.',
-      };
-    }
-   
-    // Revalidate the cache for the invoices page and redirect the user.
-    revalidatePath('/dashboard/invoices');
-    redirect('/dashboard/invoices');
-  }
-
-  export async function updateInvoice(id: string, formData: FormData) {
-    const { customerId, amount, status } = UpdateInvoice.parse({
-      customerId: formData.get('customerId'),
-      amount: formData.get('amount'),
-      status: formData.get('status'),
-    });
-   
-    const amountInCents = amount * 100;
-   
-    try {
-    await db.query(`
-      UPDATE invoices
-      SET customer_id = '${customerId}', amount = '${amountInCents}', status = '${status}'
-      WHERE id = '${id}'
-    `);
-
-    } catch (error) {
-        return {
-            message: 'Database Error: Failed to Update Invoice.',
-        };
-    }
-   
-    revalidatePath('/dashboard/invoices');
-    redirect('/dashboard/invoices');
-  }
-
-  export async function deleteInvoice(id: string) {
-    try {
-    await db.query(`DELETE FROM invoices WHERE id = '${id}'`);
-    } catch (error) {
-        return {
-            message: 'Database Error: Failed to Delete Invoice.',
-        };
-    }
-    revalidatePath('/dashboard/invoices');
-  } */
 
   export async function authenticate(
     prevState: string | undefined,

@@ -47,9 +47,17 @@ export const { auth, signIn, signOut } = NextAuth({
               sameSite: 'strict',
               path: '/',
             };
+
+            const unsafeCookieOptions = {
+              maxAge: 5 * 60 * 1000, // 5 minutes in milliseconds
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production', // Set to true in production
+              sameSite: 'strict',
+              path: '/',
+            };
             
             cookies().set('email', `${email}`, cookieOptions);
-
+            cookies().set('admin', `${'true'}`, unsafeCookieOptions);
             return user;
           }
           if(passwordsMatch) return user;

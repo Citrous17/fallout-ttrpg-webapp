@@ -3,8 +3,7 @@ import { lusitana } from '@/app/ui/fonts';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 export default async function Page() {
-  // Remove `const latestInvoices = await fetchLatestInvoices()`
- 
+
   return (
     <main>
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
