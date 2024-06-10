@@ -208,7 +208,7 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
         console.log('Unarmed Attack');
         break;
     }
-
+    let died = false;
     if(hit) {
       const currentTime = new Date().toLocaleTimeString();
       let message;
@@ -220,6 +220,11 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
       setRecentActions([...recentActions, message]);
       console.log('Defender Health:', defender.hp)
       const newHealth = defender.hp - damage;
+      
+      if(newHealth <= 0) {
+        died = true;
+      }
+
       console.log('New Health:', newHealth)
 
       const data = await fetch('/api/battle', {
@@ -254,7 +259,7 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
         'Content-Type': 'application/json',
         'Post-Type': 'attack',
       },
-      body: JSON.stringify({ weapon, attacker, defender }),
+      body: JSON.stringify({ weapon, attacker, defender, died, turnOrder }),
       cache:"no-cache"
     });
     

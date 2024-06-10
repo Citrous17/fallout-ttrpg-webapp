@@ -132,11 +132,19 @@ export async function POST(request: Request) {
   } 
   else if(request.headers.get('Post-Type') == 'attack') {
     const requestBody = JSON.parse(await request.text());
-
+    if(requestBody.died) {
+      const res = await sql`DELETE FROM enemies WHERE id = ${requestBody.defender.id}`
+      const updatedTurnOrder = requestBody.turnOrder.filter((id: string) => id !== requestBody.defender.id);
+      console.log('UPDATED TURN ORDER:', updatedTurnOrder)
+      const res2 = await sql`UPDATE battles SET turnOrder = ${updatedTurnOrder} WHERE id = ${requestBody.id}`;
+      console.log('ENEMY DIED:', requestBody.defender)
+      console.log('ENEMY DIED:', res)
+      console.log('ENEMY DIED:', res2)
+    } else {
     const res = await sql`UPDATE battles SET turn = turn + 1 WHERE id = ${requestBody.id}`;
+    }
 
-
-    return Response.json({ message: 'Turn incremented' });
+    return Response.json({ message: 'Attack complete' });
   }
   else if(request.headers.get('Post-Type') == 'getWeapon') {
 
