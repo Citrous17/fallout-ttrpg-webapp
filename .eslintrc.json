@@ -2,7 +2,6 @@
 {
   "extends": "next/core-web-vitals",
   "rules": {
-    "no-warning-comments": ["error", { "terms": ["@remove"], "location": "anywhere" }],
-    "warning-comments": ["warn", { "terms": ["@update"], "location": "anywhere" }]
+    "no-warning-comments": ["error", { "terms": ["@remove", "console.log"], "location": "anywhere" }]
   }
 }

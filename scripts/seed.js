@@ -185,8 +185,8 @@ async function seedBattles(client) {
         image_url TEXT NOT NULL,
         turnOrder TEXT[] NOT NULL,
         turn INT NOT NULL,
-        enemies UUID[] NOT NULL,
-        players UUID[] NOT NULL,
+        enemies TEXT[] NOT NULL,
+        players TEXT[] NOT NULL,
         template BOOLEAN NOT NULL,
         location TEXT NOT NULL
       );

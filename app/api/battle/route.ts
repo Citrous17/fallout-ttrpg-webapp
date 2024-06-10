@@ -3,6 +3,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Weapon, Enemy, Player } from '@/app/lib/definitions';
 import { sql } from '@vercel/postgres';
+import { tuple } from 'zod';
 
 export async function GET(request: Request) {
    const res = await sql`SELECT * FROM battles`;
@@ -132,14 +133,62 @@ export async function POST(request: Request) {
   } 
   else if(request.headers.get('Post-Type') == 'attack') {
     const requestBody = JSON.parse(await request.text());
+    console.log('REQUEST BODY:', requestBody)
     if(requestBody.died) {
-      const res = await sql`DELETE FROM enemies WHERE id = ${requestBody.defender.id}`
       const updatedTurnOrder = requestBody.turnOrder.filter((id: string) => id !== requestBody.defender.id);
-      console.log('UPDATED TURN ORDER:', updatedTurnOrder)
+      const res = await sql`DELETE FROM enemies WHERE id = ${requestBody.defender.id}`
       const res2 = await sql`UPDATE battles SET turnOrder = ${updatedTurnOrder} WHERE id = ${requestBody.id}`;
-      console.log('ENEMY DIED:', requestBody.defender)
-      console.log('ENEMY DIED:', res)
-      console.log('ENEMY DIED:', res2)
+      let enemies = await sql`SELECT enemies FROM battles WHERE id = ${requestBody.id}`
+      const updatedEnemies = enemies.rows[0].enemies.filter((id: string) => id !== requestBody.defender.id);
+      const res3 = await sql`UPDATE battles SET enemies = ${updatedEnemies} WHERE id = ${requestBody.id}`;
+      const enemyData = await Promise.all(updatedEnemies.map(async (enemyID: string) => {
+        try {
+          const data = await sql`SELECT * FROM ENEMIES WHERE id=${enemyID};`;
+      
+          console.log('Data fetch completed.');
+          console.log('Enemy:', data.rows);
+      
+          const enemy = data.rows.map((row: any) => ({
+            id: row.id,
+            image_url: row.image_url,
+            name: row.name,
+            bodyStat: row.bodystat,
+            mindStat: row.mindstat,
+            meleeStat: row.meleestat,
+            gunsStat: row.gunsstat,
+            otherStat: row.otherstat,
+            initiative: row.initiative,
+            luckPoints: row.luckpoints,
+            physDR: row.physdr,
+            energyDR: row.energydr,
+            radDR: row.raddr,
+            poisonDR: row.poisondr,
+            maxHP: row.maxhp,
+            carryWeight: row.carryweight,
+            meleeBonus: row.meleebonus,
+            hp: row.hp,
+            xp: row.xp,
+            level: row.level,
+            special: row.special,
+            skills: row.skills,
+            defense: row.defense,
+            attacks: row.attacks,
+            weapons: row.weapons,
+            lootDrops: row.lootdrops,
+            expand: false
+          }));
+          
+          console.log('ENEMY:', enemy[0])
+      
+          return enemy[0]; // Ensure it returns an object with enemy key
+        } catch (error) {
+          console.error('Database Error:', error);
+          throw new Error('Failed to fetch enemy data.');
+        }
+      }))
+      console.log('ENEMY DATA:', enemyData)
+      return Response.json({ message: 'Enemy defeated', enemies: enemyData, turnOrder: updatedTurnOrder})
+    
     } else {
     const res = await sql`UPDATE battles SET turn = turn + 1 WHERE id = ${requestBody.id}`;
     }

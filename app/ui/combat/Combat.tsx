@@ -40,6 +40,8 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
     }
   }, [recentActions]);
 
+
+  //@remove This isn't working as intended
   async function updateCards() {
       const response = await fetch('/api/battle', {
         method: 'GET',
@@ -47,9 +49,34 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
       });
       const data = await response.json();
 
-      console.log(data);
+      console.log("UPDATING CARDS", data)
+      if (enemyCards) {
+        console.log("Cleaning Enemy Cards", enemyCards)
+        // Filter out empty items (undefined or null)
+        const cleanedEnemyCards = enemyCards.filter(card => card !== undefined && card !== null);
+      
+        console.log('Cleaned Enemy Cards:', cleanedEnemyCards);
+      
+        // Continue with your existing logic
+        const filteredEnemies = enemies.filter((enemy) => cleanedEnemyCards.find((card) => card.id === enemy.id));
+        setEnemies(filteredEnemies);
+      }
+    
+      if (playerCards) {
+        console.log("Cleaning Player Cards", playerCards)
+        // Filter out empty items (undefined or null)
+        const cleanedPlayerCards = playerCards.filter(card => card !== undefined && card !== null);
+      
+        console.log('Cleaned Player Cards:', cleanedPlayerCards);
+      
+        // Continue with your existing logic
+        const filteredPlayers = players.filter((player) => cleanedPlayerCards.find((card) => card.id === player.id));
+        setPlayers(filteredPlayers);
+      }
+
       setEnemies(data.enemyCards);
       setPlayers(data.playerCards);
+
   }
 
   async function increaseTurn() {
@@ -223,9 +250,7 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
       
       if(newHealth <= 0) {
         died = true;
-      }
-
-      console.log('New Health:', newHealth)
+      } else {
 
       const data = await fetch('/api/battle', {
         method: 'POST',
@@ -235,11 +260,8 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
         },
         body: JSON.stringify({ player: isPlayer(defender.id), id: defender.id, hp: newHealth}),
       });
-
-      console.log('Updating Cards...')
-      console.log("damage: ", damage)
-      await updateCards();
-      console.log('Cards Updated!')
+    
+    }
     }
 
     if(!hit) {
@@ -253,16 +275,27 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
       setRecentActions([...recentActions, message]);
     }
 
+    await updateCards();
+
     const response = await fetch('/api/battle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Post-Type': 'attack',
       },
-      body: JSON.stringify({ weapon, attacker, defender, died, turnOrder }),
+      body: JSON.stringify({ id: BattleInfo.id, weapon, attacker, defender, died, turnOrder }),
       cache:"no-cache"
     });
-    
+
+    const responseData = await response.json();
+
+    console.log("RESPONSE DATA:", responseData)
+    if(responseData.message === 'Enemy defeated') {
+      console.log(responseData.enemies)
+
+      setEnemies(responseData.enemies);
+      setTurnOrder(responseData.turnOrder);
+    }
   }
   
   const handleToggleActions = () => {
@@ -270,10 +303,18 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
   };
 
   function getTurnCardImage(id: string) {
-    const playerCard = playerCards.find(card => card.id === id);
-    const enemyCard = enemyCards.find(card => card.id === id);
-    console.log('Player Card:', playerCard)
-    console.log('Enemy Card:', enemyCard)
+    console.log("TESTING STRING: " + id)
+    let playerCard;
+    let enemyCard;
+    try {
+    playerCard = playerCards.find(card => card.id === id);
+    } catch(e) {
+      try {
+      enemyCard = enemyCards.find(card => card.id === id);
+      } catch(e) {
+        console.log("No card found")
+      }
+    }
     return (playerCard?.image_url ?? enemyCard?.image_url) ?? '/enemies/MissingImage.png';
   }
 
@@ -364,9 +405,9 @@ const Combat = ({ admin, UserWeapons, BattleInfo, enemyCards, playerCards, actio
   const currentWeapon = getCurrentWeapon();
   const displayActions = actions.slice(-10);
 
-
-
-  console.log('Admin:', admin)
+  console.log('Turn Order:', turnOrder);
+  console.log('Players: ', players);
+  console.log('Enemies: ', enemies);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center relative">
